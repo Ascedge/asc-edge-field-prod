@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Address is required' }, { status: 400 })
     }
 
-    // Normalize address
+    // Normalize address (lowercase, trim, collapse whitespace)
     const normalizedAddress = address
       .toLowerCase()
       .trim()

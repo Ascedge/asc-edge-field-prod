@@ -31,25 +31,28 @@ async function seedBayOaks() {
     return {
       address: p.address,
       normalized_address: normalized,
+      lat: p.lat,
+      lng: p.lng,
+      replacement_score: p.replacementScore,
+      listing_risk_score: p.listingRiskScore,
+      roof_age: p.roofAge,
+      roof_type: p.roofType,
+      year_built: p.yearBuilt,
       tenant_id: 'gary',
-      claim_status: 'unclaimed',
-      // Only columns that exist in the current schema (from task 3 + schema)
-      // No lat/lng, no score fields, no observations JSONB yet.
+      claim_status: 'unclaimed'
     }
   })
 
-  // Use simple insert. If a row already exists we skip it. This is the safest for the current schema and data.
+  // Use upsert on normalized_address (now that columns exist)
   const { error, count } = await supabase
     .from('properties')
-    .insert(records)
+    .upsert(records, {
+      onConflict: 'normalized_address'
+    })
 
   if (error) {
-    if (error.code === '23505') {
-      console.log('Some addresses already exist (normal on re-run). Continuing with existing data.')
-    } else {
-      console.error('Seed failed:', error)
-      process.exit(1)
-    }
+    console.error('Seed failed:', error)
+    process.exit(1)
   }
 
   // Get final count
@@ -57,8 +60,8 @@ async function seedBayOaks() {
     .from('properties')
     .select('*', { count: 'exact', head: true })
 
-  console.log(`✅ Seed complete. Total properties now: ${finalCount}`)
-  console.log('First few normalized addresses from source:')
+  console.log(`✅ Successfully upserted ${count} Bay Oaks properties. Total now: ${finalCount}`)
+  console.log('First few normalized addresses:')
   records.slice(0, 5).forEach(r => console.log('  -', r.normalized_address))
 }
 

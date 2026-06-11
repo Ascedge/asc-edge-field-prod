@@ -44,6 +44,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // Fire GHL webhook if appointment (graceful if no URL)
+    if (outcome === 'appointment') {
+      const ghlUrl = process.env.GHL_WEBHOOK_URL
+      if (ghlUrl) {
+        const payload = {
+          property_id,
+          rep_id,
+          timestamp: new Date().toISOString(),
+        }
+        try {
+          await fetch(ghlUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+        } catch (webhookErr) {
+          console.error('GHL webhook failed (non-blocking):', webhookErr)
+        }
+      } else {
+        console.log('GHL_WEBHOOK_URL not set - skipping webhook')
+      }
+    }
+
     return NextResponse.json({ visit_id: visit.id })
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 })

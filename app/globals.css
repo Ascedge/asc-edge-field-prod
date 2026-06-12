@@ -26,3 +26,9 @@ body {
   margin: 0;
   padding: 0;
 }
+
+/* Premium heading style - authoritative serif fallback for luxury feel */
+h1 {
+  font-family: "Georgia", "Times New Roman", serif;
+  letter-spacing: -0.02em;
+}

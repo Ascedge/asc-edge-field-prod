@@ -1,16 +1,16 @@
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#0a0e1a] text-white flex flex-col">
-      {/* ASC EDGE Header */}
-      <header className="bg-[#0a0e1a] border-b border-[#d4af37] py-4 px-6 flex items-center justify-between">
+      {/* ASC EDGE Header with eagle branding */}
+      <header className="bg-[#0a0e1a] border-b border-[#d4af37]/60 py-4 px-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#d4af37] rounded-full flex items-center justify-center text-[#0a0e1a] font-bold text-xl">A</div>
+          <div className="text-4xl drop-shadow-[0_0_12px_#d4af37]">🦅</div>
           <div>
-            <div className="text-[#d4af37] font-bold tracking-widest text-2xl">ASC</div>
-            <div className="text-xs text-white/70 -mt-1">EDGE FIELD</div>
+            <div className="text-[#d4af37] font-bold tracking-[4px] text-[28px] leading-none">ASC</div>
+            <div className="text-[10px] text-white/70 tracking-[2px] -mt-0.5">EDGE FIELD</div>
           </div>
         </div>
-        <div className="text-xs uppercase tracking-widest text-white/60">Command Black</div>
+        <div className="px-4 py-1 text-xs font-mono border border-[#d4af37]/40 rounded bg-black/40 text-[#d4af37]">COMMAND BLACK</div>
       </header>
 
       {/* Main Content - Mobile-first, centered search */}

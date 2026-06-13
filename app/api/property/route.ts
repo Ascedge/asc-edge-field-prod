@@ -20,10 +20,10 @@ export async function POST(request: NextRequest) {
 
     const supabase = createSupabaseAdminClient()
 
-    // Find existing
+    // Exact match first
     let { data: existing, error: findError } = await supabase
       .from('properties')
-      .select('id, address, normalized_address, tenant_id, claim_status')
+      .select('id, address, normalized_address, tenant_id, claim_status, neighborhood, field_score, field_note')
       .eq('normalized_address', normalizedAddress)
       .single()
 
@@ -31,8 +31,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ property: existing })
     }
 
+    // Partial match fallback (e.g. '1802 Orchard' matches seeded record)
+    const partial = `%${normalizedAddress}%`
+    const { data: partialMatch } = await supabase
+      .from('properties')
+      .select('id, address, normalized_address, tenant_id, claim_status, neighborhood, field_score, field_note')
+      .ilike('address', partial)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (partialMatch) {
+      return NextResponse.json({ property: partialMatch })
+    }
+
     if (findError && findError.code !== 'PGRST116') {
-      // PGRST116 = no rows returned
       return NextResponse.json({ error: findError.message }, { status: 500 })
     }
 

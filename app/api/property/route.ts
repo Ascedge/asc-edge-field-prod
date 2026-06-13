@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdminClient } from '@/lib/supabase'
-import { bayOaksSeed } from '@/data/bay-oaks-seed'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,9 +48,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: findError.message }, { status: 500 })
     }
 
-    // Insert new with seed data if available
-    const seedData = bayOaksSeed.find(s => s.normalized_address === normalizedAddress)
-
+    // Insert new — DB is already seeded with 137 properties; no static seed import needed
     const { data: inserted, error: insertError } = await supabase
       .from('properties')
       .insert({
@@ -59,9 +56,9 @@ export async function POST(request: NextRequest) {
         normalized_address: normalizedAddress,
         tenant_id: 'gary',
         claim_status: 'unclaimed',
-        neighborhood: seedData?.neighborhood || null,
-        field_score: seedData?.field_score || null,
-        field_note: seedData?.field_note || null,
+        neighborhood: null,
+        field_score: null,
+        field_note: null,
       })
       .select('id, address, normalized_address, tenant_id, claim_status, neighborhood, field_score, field_note')
       .single()

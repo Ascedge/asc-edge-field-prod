@@ -73,7 +73,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
           </div>
         )}
 
-        <DamageChecklist propertyId={property.id} initialScore={property.field_score || 0} initialObservations={property.observations || []} />
+        <DamageChecklist propertyId={property.id} initialScore={property.field_score || 8.5} initialObservations={property.observations || []} />
 
         {/* Large gold START INSPECTION button (style only) */}
         <button className="w-full bg-[#d4af37] hover:bg-[#e5c15c] active:bg-[#b38a2e] text-[#0a0e1a] font-bold text-lg py-6 rounded-3xl tracking-widest transition-all shadow-xl shadow-black/50">

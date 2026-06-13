@@ -30,6 +30,7 @@ export default function DamageChecklist({ propertyId, initialScore, initialObser
     selected.forEach(item => {
       delta += weights[item] || 0;
     });
+    // Base = initialScore (objective or original field_score). Add current bumps only. Recompute fresh each time so unchecking removes bump cleanly.
     return Math.min(10, Math.max(0, initialScore + delta));
   };
 

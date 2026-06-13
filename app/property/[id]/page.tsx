@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
+import DamageChecklist from '../../../components/DamageChecklist'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,6 +10,7 @@ interface Property {
   neighborhood?: string | null
   field_score?: number | null
   field_note?: string | null
+  observations?: string[] | null
 }
 
 export default async function PropertyPage({ params }: { params: Promise<{ id: string }> }) {
@@ -17,7 +19,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
 
   const { data: property, error } = await supabase
     .from('properties')
-    .select('id, address, neighborhood, field_score, field_note')
+    .select('id, address, neighborhood, field_score, field_note, observations')
     .eq('id', id)
     .single()
 
@@ -70,6 +72,8 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
             <div className="text-xs text-white/40 mt-1">/ 10 • Insurance Likelihood</div>
           </div>
         )}
+
+        <DamageChecklist propertyId={property.id} initialScore={property.field_score || 0} initialObservations={property.observations || []} />
 
         {/* Large gold START INSPECTION button (style only) */}
         <button className="w-full bg-[#d4af37] hover:bg-[#e5c15c] active:bg-[#b38a2e] text-[#0a0e1a] font-bold text-lg py-6 rounded-3xl tracking-widest transition-all shadow-xl shadow-black/50">

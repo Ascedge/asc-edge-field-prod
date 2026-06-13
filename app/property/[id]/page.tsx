@@ -45,12 +45,22 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
           )}
         </div>
 
-        {/* Placeholder for imagery (Google key pending) */}
-        <div className="bg-[#111827] border border-dashed border-white/30 rounded-3xl h-80 mb-8 flex items-center justify-center text-center">
-          <div className="text-white/40 text-sm max-w-[240px]">
-            Property imagery — Google Maps key pending<br />
-            (Street View + Satellite)
-          </div>
+        {/* Real Google Street View + Satellite imagery (using the provided keys) */}
+        <div className="rounded-3xl overflow-hidden mb-6 shadow-2xl shadow-black/60 border border-white/10">
+          <img
+            src={`https://maps.googleapis.com/maps/api/streetview?size=640x360&location=${encodeURIComponent(property.address)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`}
+            alt="Street View"
+            className="w-full h-auto"
+            onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/640x360/111827/ffffff?text=Street+View+Unavailable'; }}
+          />
+        </div>
+        <div className="rounded-3xl overflow-hidden mb-8 shadow-2xl shadow-black/60 border border-white/10">
+          <img
+            src={`https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(property.address)}&zoom=19&size=640x360&maptype=satellite&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`}
+            alt="Satellite View"
+            className="w-full h-auto"
+            onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/640x360/111827/ffffff?text=Satellite+View+Unavailable'; }}
+          />
         </div>
 
         {property.field_score !== null && (

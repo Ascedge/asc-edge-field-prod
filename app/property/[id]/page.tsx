@@ -45,6 +45,14 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
           )}
         </div>
 
+        {/* Placeholder for imagery (Google key pending) */}
+        <div className="bg-[#111827] border border-dashed border-white/30 rounded-3xl h-80 mb-8 flex items-center justify-center text-center">
+          <div className="text-white/40 text-sm max-w-[240px]">
+            Property imagery — Google Maps key pending<br />
+            (Street View + Satellite)
+          </div>
+        </div>
+
         {property.field_score !== null && (
           <div className="bg-[#111827] border border-[#d4af37]/30 rounded-3xl p-8 mb-8 text-center">
             <div className="text-white/60 text-sm mb-2 tracking-widest">FIELD SCORE</div>
@@ -54,6 +62,11 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
             <div className="text-xs text-white/40 mt-1">/ 10 • Insurance Likelihood</div>
           </div>
         )}
+
+        {/* Large gold START INSPECTION button (style only) */}
+        <button className="w-full bg-[#d4af37] hover:bg-[#e5c15c] active:bg-[#b38a2e] text-[#0a0e1a] font-bold text-lg py-6 rounded-3xl tracking-widest transition-all shadow-xl shadow-black/50">
+          START INSPECTION
+        </button>
 
         {property.field_note && (
           <div className="bg-[#111827]/70 border border-white/10 rounded-2xl p-6">

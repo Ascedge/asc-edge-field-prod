@@ -1,6 +1,8 @@
 import { createSupabaseAdminClient } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 
+export const dynamic = 'force-dynamic'
+
 interface Property {
   id: string
   address: string
@@ -9,13 +11,14 @@ interface Property {
   field_note?: string | null
 }
 
-export default async function PropertyPage({ params }: { params: { id: string } }) {
+export default async function PropertyPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = createSupabaseAdminClient()
 
   const { data: property, error } = await supabase
     .from('properties')
     .select('id, address, neighborhood, field_score, field_note')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (error || !property) {

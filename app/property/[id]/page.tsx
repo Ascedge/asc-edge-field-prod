@@ -51,7 +51,6 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
             src={`https://maps.googleapis.com/maps/api/streetview?size=640x360&location=${encodeURIComponent(property.address)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`}
             alt="Street View"
             className="w-full h-auto"
-            onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/640x360/111827/ffffff?text=Street+View+Unavailable'; }}
           />
         </div>
         <div className="rounded-3xl overflow-hidden mb-8 shadow-2xl shadow-black/60 border border-white/10">
@@ -59,7 +58,6 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
             src={`https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(property.address)}&zoom=19&size=640x360&maptype=satellite&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`}
             alt="Satellite View"
             className="w-full h-auto"
-            onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/640x360/111827/ffffff?text=Satellite+View+Unavailable'; }}
           />
         </div>
 

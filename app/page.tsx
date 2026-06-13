@@ -1,6 +1,43 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Home as HomeIcon, MapPin, Phone, BarChart3 } from "lucide-react";
 
 export default function Home() {
+  const [address, setAddress] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!address.trim()) return
+
+    setIsLoading(true)
+
+    try {
+      const res = await fetch('/api/property', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: address.trim() }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || !data.property?.id) {
+        alert('Error: ' + (data.error || 'Failed to process property'))
+        return
+      }
+
+      // Navigate to property detail
+      router.push(`/property/${data.property.id}`)
+    } catch (err) {
+      alert('Network error. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0e1a] text-white flex flex-col">
       {/* ASC EDGE Header — using actual logo if present, otherwise refined text mark */}
@@ -25,17 +62,24 @@ export default function Home() {
             <p className="text-white/70 text-[15px]">Enter the property address below</p>
           </div>
 
-          {/* Large centered address search — refined, no emoji */}
-          <div className="relative">
+          {/* Wired address search */}
+          <form onSubmit={handleSubmit} className="relative">
             <input
               type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
               placeholder="Enter property address"
-              className="w-full bg-[#111827] border border-white/30 focus:border-[#d4af37] text-white placeholder:text-white/50 rounded-3xl px-8 py-7 text-xl outline-none transition-all text-center"
+              className="w-full bg-[#111827] border border-white/30 focus:border-[#d4af37] text-white placeholder:text-white/50 rounded-3xl px-8 py-7 text-xl outline-none transition-all text-center disabled:opacity-70"
+              disabled={isLoading}
             />
-            <div className="absolute right-8 top-1/2 -translate-y-1/2 text-[#d4af37]">
+            <button
+              type="submit"
+              disabled={isLoading || !address.trim()}
+              className="absolute right-8 top-1/2 -translate-y-1/2 text-[#d4af37] disabled:opacity-40 transition-all active:scale-95"
+            >
               <MapPin className="w-6 h-6" />
-            </div>
-          </div>
+            </button>
+          </form>
         </div>
       </main>
 

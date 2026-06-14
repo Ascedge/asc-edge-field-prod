@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import DamageChecklist from '../../../components/DamageChecklist'
+import PreKnockCapture from '../../../components/PreKnockCapture'
 
 export const dynamic = 'force-dynamic'
 
@@ -75,10 +76,9 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
 
         <DamageChecklist propertyId={property.id} initialScore={property.field_score || 8.5} initialObservations={property.observations || []} />
 
-        {/* Large gold START INSPECTION button (style only) */}
-        <button className="w-full bg-[#d4af37] hover:bg-[#e5c15c] active:bg-[#b38a2e] text-[#0a0e1a] font-bold text-lg py-6 rounded-3xl tracking-widest transition-all shadow-xl shadow-black/50">
-          START INSPECTION
-        </button>
+        <PreKnockCapture propertyId={property.id} />
+
+        {/* Large gold START INSPECTION button is now inside PreKnockCapture component */}
 
         {property.field_note && (
           <div className="bg-[#111827]/70 border border-white/10 rounded-2xl p-6">

@@ -1,0 +1,108 @@
+'use client';
+
+import { useState } from 'react';
+
+interface PreKnockCaptureProps {
+  propertyId: string;
+}
+
+export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
+  const [photos, setPhotos] = useState<Array<{ id: string; url: string; status: string }>>([]);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const tempId = 'temp-' + Date.now() + '-' + i;
+
+      // Add placeholder
+      setPhotos(prev => [...prev, { id: tempId, url: '', status: 'uploading' }]);
+
+      const formData = new FormData();
+      formData.append('property_id', propertyId);
+      formData.append('phase', 'pre_knock');
+      formData.append('image', file);
+
+      try {
+        const res = await fetch('/api/photo', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const result = await res.json();
+
+        if (res.ok && result.url) {
+          setPhotos(prev => 
+            prev.map(p => p.id === tempId 
+              ? { id: result.photo_id || tempId, url: result.url, status: 'uploaded' }
+              : p
+            )
+          );
+        } else {
+          setPhotos(prev => 
+            prev.map(p => p.id === tempId ? { ...p, status: 'error' } : p)
+          );
+        }
+      } catch (err) {
+        setPhotos(prev => 
+          prev.map(p => p.id === tempId ? { ...p, status: 'error' } : p)
+        );
+      }
+    }
+
+    setUploading(false);
+    // Reset input
+    e.target.value = '';
+  };
+
+  return (
+    <div className="mb-8">
+      <button 
+        onClick={() => document.getElementById('pre-knock-camera')?.click()}
+        className="w-full bg-[#d4af37] hover:bg-[#e5c15c] active:bg-[#b38a2e] text-[#0a0e1a] font-bold text-lg py-6 rounded-3xl tracking-widest transition-all shadow-xl shadow-black/50 flex items-center justify-center gap-3"
+        disabled={uploading}
+      >
+        {uploading ? 'UPLOADING...' : 'START INSPECTION (Pre-Knock Photos)'}
+        <span className="text-xl">📸</span>
+      </button>
+
+      <input
+        id="pre-knock-camera"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        multiple
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      {photos.length > 0 && (
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          {photos.map((photo, idx) => (
+            <div key={idx} className="relative rounded-2xl overflow-hidden border border-white/10 aspect-video bg-black">
+              {photo.url ? (
+                <img src={photo.url} alt="Pre-knock" className="w-full h-full object-cover" />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm">
+                  {photo.status}
+                </div>
+              )}
+              {photo.status === 'uploaded' && (
+                <div className="absolute top-2 right-2 bg-green-500 text-[10px] px-2 py-0.5 rounded-full text-black font-bold">✓</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="text-center text-[10px] text-white/40 mt-3">
+        Take 2–3 front-of-house photos before the knock • phase=pre_knock
+      </div>
+    </div>
+  );
+}

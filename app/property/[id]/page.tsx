@@ -78,8 +78,6 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
 
         <PreKnockCapture propertyId={property.id} />
 
-        {/* Large gold START INSPECTION button is now inside PreKnockCapture component */}
-
         {property.field_note && (
           <div className="bg-[#111827]/70 border border-white/10 rounded-2xl p-6">
             <div className="uppercase text-white/50 text-xs tracking-widest mb-3">Field Note</div>

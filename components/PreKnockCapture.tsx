@@ -62,13 +62,24 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
 
   return (
     <div className="mb-8">
+      {/* Camera button (capture=environment) */}
       <button 
         onClick={() => document.getElementById('pre-knock-camera')?.click()}
-        className="w-full bg-[#d4af37] hover:bg-[#e5c15c] active:bg-[#b38a2e] text-[#0a0e1a] font-bold text-lg py-6 rounded-3xl tracking-widest transition-all shadow-xl shadow-black/50 flex items-center justify-center gap-3"
+        className="w-full bg-[#d4af37] hover:bg-[#e5c15c] active:bg-[#b38a2e] text-[#0a0e1a] font-bold text-lg py-6 rounded-3xl tracking-widest transition-all shadow-xl shadow-black/50 flex items-center justify-center gap-3 mb-3"
         disabled={uploading}
       >
-        {uploading ? 'UPLOADING...' : 'START INSPECTION (Pre-Knock Photos)'}
+        {uploading ? 'UPLOADING...' : 'TAKE PHOTO WITH CAMERA'}
         <span className="text-xl">📸</span>
+      </button>
+
+      {/* Library button - separate input without capture */}
+      <button 
+        onClick={() => document.getElementById('pre-knock-library')?.click()}
+        className="w-full bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold text-lg py-6 rounded-3xl tracking-widest transition-all shadow-xl shadow-black/50 flex items-center justify-center gap-3"
+        disabled={uploading}
+      >
+        CHOOSE FROM LIBRARY
+        <span className="text-xl">📁</span>
       </button>
 
       <input
@@ -76,6 +87,15 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
         type="file"
         accept="image/*"
         capture="environment"
+        multiple
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      <input
+        id="pre-knock-library"
+        type="file"
+        accept="image/*"
         multiple
         onChange={handleFileSelect}
         className="hidden"
@@ -100,7 +120,24 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
         </div>
       )}
 
-      <div className="text-center text-[10px] text-white/40 mt-3">
+      {photos.filter(p => p.status === 'uploaded').length > 0 && (
+        <div className="mt-8 flex flex-col gap-3">
+          <button
+            onClick={() => window.location.href = '/'}
+            className="w-full bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold py-4 rounded-3xl tracking-widest"
+          >
+            LEAVE CARD & MOVE ON
+          </button>
+          <button
+            onClick={() => window.location.href = `/property/${propertyId}/present`}
+            className="w-full bg-[#d4af37] hover:bg-[#e5c15c] active:bg-[#b38a2e] text-[#0a0e1a] font-bold py-4 rounded-3xl tracking-widest"
+          >
+            HOMEOWNER ANSWERED →
+          </button>
+        </div>
+      )}
+
+      <div className="text-center text-[10px] text-white/40 mt-6">
         Take 2–3 front-of-house photos before the knock • phase=pre_knock
       </div>
     </div>

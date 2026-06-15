@@ -1,14 +1,56 @@
 'use client';
 
 import { useState } from 'react';
+import { Camera, Image as ImageIcon } from 'lucide-react';
 
 interface PreKnockCaptureProps {
   propertyId: string;
 }
 
+interface PhotoItem {
+  id: string;
+  url: string;
+  status: string;
+  file?: File;
+}
+
 export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
-  const [photos, setPhotos] = useState<Array<{ id: string; url: string; status: string }>>([]);
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [uploading, setUploading] = useState(false);
+
+  const retryUpload = async (tempId: string, propertyId: string) => {
+    const photo = photos.find(p => p.id === tempId);
+    if (!photo || !photo.file) return;
+
+    setPhotos(prev => prev.map(p => p.id === tempId ? { ...p, status: 'uploading' } : p));
+
+    const formData = new FormData();
+    formData.append('property_id', propertyId);
+    formData.append('phase', 'pre_knock');
+    formData.append('image', photo.file);
+
+    try {
+      const res = await fetch('/api/photo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await res.json();
+
+      if (res.ok && result.url) {
+        setPhotos(prev => 
+          prev.map(p => p.id === tempId 
+            ? { id: result.photo_id || tempId, url: result.url, status: 'uploaded', file: undefined }
+            : p
+          )
+        );
+      } else {
+        setPhotos(prev => prev.map(p => p.id === tempId ? { ...p, status: 'error', file: photo.file } : p));
+      }
+    } catch (err) {
+      setPhotos(prev => prev.map(p => p.id === tempId ? { ...p, status: 'error', file: photo.file } : p));
+    }
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -20,8 +62,8 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
       const file = files[i];
       const tempId = 'temp-' + Date.now() + '-' + i;
 
-      // Add placeholder
-      setPhotos(prev => [...prev, { id: tempId, url: '', status: 'uploading' }]);
+      // Add placeholder with file for retry
+      setPhotos(prev => [...prev, { id: tempId, url: '', status: 'uploading', file }]);
 
       const formData = new FormData();
       formData.append('property_id', propertyId);
@@ -69,7 +111,7 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
         disabled={uploading}
       >
         {uploading ? 'UPLOADING...' : 'TAKE PHOTO WITH CAMERA'}
-        <span className="text-xl">📸</span>
+        <Camera className="w-6 h-6" />
       </button>
 
       {/* Library button - separate input without capture */}
@@ -79,7 +121,7 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
         disabled={uploading}
       >
         CHOOSE FROM LIBRARY
-        <span className="text-xl">📁</span>
+        <ImageIcon className="w-6 h-6" />
       </button>
 
       <input
@@ -103,10 +145,18 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
 
       {photos.length > 0 && (
         <div className="mt-6 grid grid-cols-2 gap-3">
-          {photos.map((photo, idx) => (
-            <div key={idx} className="relative rounded-2xl overflow-hidden border border-white/10 aspect-video bg-black">
+          {photos.map((photo) => (
+            <div key={photo.id} className="relative rounded-2xl overflow-hidden border border-white/10 aspect-video bg-black">
               {photo.url ? (
                 <img src={photo.url} alt="Pre-knock" className="w-full h-full object-cover" />
+              ) : photo.status === 'error' ? (
+                <div 
+                  onClick={() => retryUpload(photo.id, propertyId)}
+                  className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 cursor-pointer hover:bg-black/90 rounded-2xl"
+                >
+                  <div className="text-red-400 text-sm mb-3">Upload failed</div>
+                  <div className="bg-white text-black text-xs font-bold px-6 py-2 rounded-2xl active:scale-95">RETRY</div>
+                </div>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm">
                   {photo.status}

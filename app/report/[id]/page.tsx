@@ -23,7 +23,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
 
   const { data: property, error: propError } = await supabase
     .from('properties')
-    .select('id, address, neighborhood, field_score, observations')
+    .select('id, address, neighborhood, field_score, observations, roof_age')
     .eq('id', id)
     .single();
 
@@ -125,12 +125,20 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
 
-        {/* Storm / Weather Exposure */}
+        {/* Cumulative Environmental Exposure */}
         <div className="mb-12">
-          <div className="uppercase text-[#d4af37] text-xs tracking-widest mb-4">STORM & WEATHER EXPOSURE</div>
-          <div className="bg-black/60 border border-white/10 rounded-3xl p-8 text-center">
-            <div className="text-2xl text-white/70 mb-4">Pending full analysis</div>
-            <p className="text-white/50 text-sm">Real NOAA / local storm data and cumulative weather stress metrics (heat days, UV hours, hail/wind events) will be populated here in the next phase.</p>
+          <div className="uppercase text-[#d4af37] text-xs tracking-widest mb-4">CUMULATIVE ENVIRONMENTAL EXPOSURE</div>
+          <div className="bg-[#111827] border border-white/10 rounded-3xl p-8 text-white/80">
+            <div className="font-mono text-xs text-white/50 mb-4">Regional estimate — Houston-area climate × roof age. Property-specific data pending full analysis.</div>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+              <div>~{Math.round((property.roof_age || 15) * 101)} days over 90°F</div>
+              <div>~{Math.round((property.roof_age || 15) * 4)} nights ≤ freezing</div>
+              <div>~{Math.round((property.roof_age || 15) * 100)} rain days</div>
+              <div>~5 months/year at UV index 7+</div>
+            </div>
+            <div className="mt-6 text-[#d4af37] text-sm pt-4 border-t border-white/10">
+              {(property.roof_age || 15)} years of accumulated Houston weather stress accelerates shingle aging and hidden damage.
+            </div>
           </div>
         </div>
 

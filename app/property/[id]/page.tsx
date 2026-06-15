@@ -20,7 +20,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
 
   const { data: property, error } = await supabase
     .from('properties')
-    .select('id, address, neighborhood, field_score, field_note, observations')
+    .select('id, address, neighborhood, field_score, field_note, observations, roof_age')
     .eq('id', id)
     .single()
 
@@ -84,6 +84,25 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
             <p className="text-white/90 leading-relaxed">{property.field_note}</p>
           </div>
         )}
+
+        {/* Cumulative Environmental Exposure */}
+        <div className="bg-[#111827] border border-[#d4af37]/30 rounded-3xl p-8 mb-8">
+          <div className="uppercase text-[#d4af37] text-xs tracking-widest mb-4">CUMULATIVE ENVIRONMENTAL EXPOSURE</div>
+          <div className="text-white/80 space-y-4">
+            <div>
+              <div className="font-mono text-xs text-white/50">Regional estimate — Houston-area climate × roof age. Property-specific data pending full analysis.</div>
+              <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
+                <div>~{Math.round((property.roof_age || 15) * 101)} days over 90°F</div>
+                <div>~{Math.round((property.roof_age || 15) * 4)} nights ≤ freezing</div>
+                <div>~{Math.round((property.roof_age || 15) * 100)} rain days</div>
+                <div>~5 months/year at UV index 7+</div>
+              </div>
+            </div>
+            <div className="text-[#d4af37] text-sm border-t border-white/10 pt-4">
+              {(property.roof_age || 15)} years of accumulated Houston weather stress accelerates shingle aging and hidden damage.
+            </div>
+          </div>
+        </div>
 
         <div className="mt-12 text-center text-xs text-white/30">
           Full Property Intel coming in next task

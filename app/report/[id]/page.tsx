@@ -137,7 +137,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
               <div>~5 months/year at UV index 7+</div>
             </div>
             <div className="mt-6 text-[#d4af37] text-sm pt-4 border-t border-white/10">
-              {(property.roof_age || 15)} years of accumulated Houston weather stress accelerates shingle aging and hidden damage.
+              {(property.roof_age || 15)} years of accumulated Houston weather stress 🌧️ accelerates shingle aging and hidden damage.
             </div>
           </div>
         </div>

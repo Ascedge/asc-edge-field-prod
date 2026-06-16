@@ -99,7 +99,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
               </div>
             </div>
             <div className="text-[#d4af37] text-sm border-t border-white/10 pt-4">
-              {(property.roof_age || 15)} years of accumulated Houston weather stress accelerates shingle aging and hidden damage.
+              {(property.roof_age || 15)} years of accumulated Houston weather stress 🌧️ accelerates shingle aging and hidden damage.
             </div>
           </div>
         </div>

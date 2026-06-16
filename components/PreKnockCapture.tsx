@@ -154,8 +154,8 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
                   onClick={() => retryUpload(photo.id, propertyId)}
                   className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 cursor-pointer hover:bg-black/90 rounded-2xl"
                 >
-                  <div className="text-red-400 text-sm mb-3">Upload failed</div>
-                  <div className="bg-white text-black text-xs font-bold px-6 py-2 rounded-2xl active:scale-95">RETRY</div>
+                  <div className="text-red-400 text-sm mb-3">Upload failed 🌧️</div>
+                  <div className="bg-white text-black text-xs font-bold px-6 py-2 rounded-2xl active:scale-95">RETRY ⛈️</div>
                 </div>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm">

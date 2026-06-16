@@ -2,6 +2,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import DamageChecklist from '../../../components/DamageChecklist'
 import PreKnockCapture from '../../../components/PreKnockCapture'
+import StormReviewHistory from '../../../components/StormReviewHistory'
 
 export const dynamic = 'force-dynamic'
 
@@ -103,6 +104,8 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
             </div>
           </div>
         </div>
+
+        <StormReviewHistory county="Harris" />
 
         <div className="mt-12 text-center text-xs text-white/30">
           Full Property Intel coming in next task

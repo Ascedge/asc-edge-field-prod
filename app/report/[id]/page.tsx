@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
+import StormReviewHistory from '../../../components/StormReviewHistory';
 
 export const dynamic = 'force-dynamic';
 
@@ -141,6 +142,8 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
             </div>
           </div>
         </div>
+
+        <StormReviewHistory county="Harris" />
 
         {/* Thermal IR Second Opinion */}
         <div className="mb-16">

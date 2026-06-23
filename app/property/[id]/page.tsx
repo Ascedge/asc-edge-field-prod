@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import DamageChecklist from '../../../components/DamageChecklist'
 import PreKnockCapture from '../../../components/PreKnockCapture'
 import StormReviewHistory from '../../../components/StormReviewHistory'
+import LogVisitForm from '../../../components/LogVisitForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -107,8 +108,17 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
 
         <StormReviewHistory county="Harris" />
 
+        <LogVisitForm 
+          propertyId={property.id} 
+          photosCollected={3} 
+        />
+
+        <a href={`/property/${property.id}/present`} className="block mt-8 w-full bg-[#d4af37] hover:bg-[#e5c15c] text-[#0a0e1a] font-bold py-5 rounded-3xl text-center tracking-widest active:scale-[0.985]">
+          → HOMEOWNER ANSWERED — START CAROUSEL
+        </a>
+
         <div className="mt-12 text-center text-xs text-white/30">
-          Full Property Intel coming in next task
+          S3 — Homeowner Carousel + report_events logging (live)
         </div>
       </main>
     </div>

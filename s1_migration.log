@@ -1,0 +1,69 @@
+zsh:1: command not found: tsx
+/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/lib/helpers.ts:111
+    throw new Error('supabaseUrl is required.')
+          ^
+
+Error: supabaseUrl is required.
+    at validateSupabaseUrl (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/lib/helpers.ts:111:11)
+    at new SupabaseClient (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/SupabaseClient.ts:314:21)
+    at createClient (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/index.ts:65:10)
+    at createSupabaseAdminClient (/Users/user/.openclaw/workspace/asc-edge-field-prod/lib/supabase.ts:14:10)
+    at fs (/Users/user/.openclaw/workspace/asc-edge-field-prod/scripts/s1_migration.ts:6:18)
+    at Object.<anonymous> (/Users/user/.openclaw/workspace/asc-edge-field-prod/scripts/s1_migration.ts:135:35)
+    at Module._compile (node:internal/modules/cjs/loader:1829:14)
+    at Object.transformer (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/tsx/dist/register-BOkp8V6j.cjs:9:3176)
+    at Module.load (node:internal/modules/cjs/loader:1552:32)
+    at Module._load (node:internal/modules/cjs/loader:1354:12)
+
+Node.js v25.9.0
+/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/lib/helpers.ts:111
+    throw new Error('supabaseUrl is required.')
+          ^
+
+Error: supabaseUrl is required.
+    at validateSupabaseUrl (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/lib/helpers.ts:111:11)
+    at new SupabaseClient (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/SupabaseClient.ts:314:21)
+    at createClient (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/index.ts:65:10)
+    at createSupabaseAdminClient (/Users/user/.openclaw/workspace/asc-edge-field-prod/lib/supabase.ts:14:10)
+    at fs (/Users/user/.openclaw/workspace/asc-edge-field-prod/scripts/s1_migration.ts:6:18)
+    at Object.<anonymous> (/Users/user/.openclaw/workspace/asc-edge-field-prod/scripts/s1_migration.ts:135:35)
+    at Module._compile (node:internal/modules/cjs/loader:1829:14)
+    at Object.transformer (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/tsx/dist/register-BOkp8V6j.cjs:9:3176)
+    at Module.load (node:internal/modules/cjs/loader:1552:32)
+    at Module._load (node:internal/modules/cjs/loader:1354:12)
+
+Node.js v25.9.0
+/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/lib/helpers.ts:111
+    throw new Error('supabaseUrl is required.')
+          ^
+
+Error: supabaseUrl is required.
+    at validateSupabaseUrl (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/lib/helpers.ts:111:11)
+    at new SupabaseClient (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/SupabaseClient.ts:314:21)
+    at createClient (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/index.ts:65:10)
+    at createSupabaseAdminClient (/Users/user/.openclaw/workspace/asc-edge-field-prod/lib/supabase.ts:14:10)
+    at fs (/Users/user/.openclaw/workspace/asc-edge-field-prod/scripts/s1_migration.ts:6:18)
+    at Object.<anonymous> (/Users/user/.openclaw/workspace/asc-edge-field-prod/scripts/s1_migration.ts:135:35)
+    at Module._compile (node:internal/modules/cjs/loader:1829:14)
+    at Object.transformer (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/tsx/dist/register-BOkp8V6j.cjs:9:3176)
+    at Module.load (node:internal/modules/cjs/loader:1552:32)
+    at Module._load (node:internal/modules/cjs/loader:1354:12)
+
+Node.js v25.9.0
+/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/lib/helpers.ts:111
+    throw new Error('supabaseUrl is required.')
+          ^
+
+Error: supabaseUrl is required.
+    at validateSupabaseUrl (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/lib/helpers.ts:111:11)
+    at new SupabaseClient (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/SupabaseClient.ts:314:21)
+    at createClient (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/@supabase/supabase-js/src/index.ts:65:10)
+    at createSupabaseAdminClient (/Users/user/.openclaw/workspace/asc-edge-field-prod/lib/supabase.ts:14:10)
+    at fs (/Users/user/.openclaw/workspace/asc-edge-field-prod/scripts/s1_migration.ts:6:18)
+    at Object.<anonymous> (/Users/user/.openclaw/workspace/asc-edge-field-prod/scripts/s1_migration.ts:135:35)
+    at Module._compile (node:internal/modules/cjs/loader:1829:14)
+    at Object.transformer (/Users/user/.openclaw/workspace/asc-edge-field-prod/node_modules/tsx/dist/register-BOkp8V6j.cjs:9:3176)
+    at Module.load (node:internal/modules/cjs/loader:1552:32)
+    at Module._load (node:internal/modules/cjs/loader:1354:12)
+
+Node.js v25.9.0

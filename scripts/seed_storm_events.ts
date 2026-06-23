@@ -20,7 +20,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-const YEARS = [2023, 2024, 2025];
+const YEARS = [2024, 2025, 2026];
 const COUNTIES = ['HARRIS', 'GALVESTON', 'BRAZORIA', 'FORT BEND'];
 const RELEVANT_EVENTS = new Set([
   'Hail', 'Thunderstorm Wind', 'High Wind', 'Tornado', 
@@ -89,10 +89,14 @@ async function downloadAndProcess(year: number): Promise<StormRecord[]> {
             const rows = result.data as any[];
             for (const row of rows) {
               const state = (row.STATE || '').toUpperCase().trim();
-              const county = (row.CZ_NAME || '').toUpperCase().trim();
+              let county = (row.CZ_NAME || '').toUpperCase().trim();
+              if (county === 'HARRIS') county = 'Harris';
+              else if (county === 'GALVESTON') county = 'Galveston';
+              else if (county === 'BRAZORIA') county = 'Brazoria';
+              else if (county === 'FORT BEND') county = 'Fort Bend';
               const eventType = (row.EVENT_TYPE || '').trim();
 
-              if (state !== 'TX' || !COUNTIES.includes(county) || !RELEVANT_EVENTS.has(eventType)) continue;
+              if (state !== 'TEXAS' || !COUNTIES.includes(county) || !RELEVANT_EVENTS.has(eventType)) continue;
 
               const beginDate = row.BEGIN_DATE_TIME || '';
               const eventDate = beginDate.split(' ')[0]; // YYYY-MM-DD

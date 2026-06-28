@@ -1,4 +1,4 @@
-'use client';
+
 
 import { createSupabaseAdminClient } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
@@ -6,70 +6,11 @@ import DamageChecklist from '../../../components/DamageChecklist'
 import PreKnockCapture from '../../../components/PreKnockCapture'
 import StormReviewHistory from '../../../components/StormReviewHistory'
 import LogVisitForm from '../../../components/LogVisitForm'
-import { useState } from 'react'
-import QRCode from 'react-qr-code'
+import HandOffReport from './HandOffReport'
+
+const ASSUMED_ROOF_AGE = 15; // until real roof_age data exists
 
 export const dynamic = 'force-dynamic'
-
-function HandOffReport({ propertyId }: { propertyId: string }) {
-  const [showQR, setShowQR] = useState(false);
-  const reportUrl = `https://asc-edge-field-prod.vercel.app/report/${propertyId}`;
-
-  const logHandOff = async () => {
-    try {
-      await fetch('/api/report-event', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          property_id: propertyId,
-          event_type: 'report_open',
-          variant: 'A'
-        }),
-      });
-    } catch (e) {
-      console.error('Failed to log hand-off', e);
-    }
-  };
-
-  const handleShowQR = () => {
-    logHandOff();
-    setShowQR(true);
-  };
-
-  return (
-    <div className="mb-8">
-      <button
-        onClick={handleShowQR}
-        className="w-full bg-[#d4af37] hover:bg-[#e5c15c] text-[#0a0e1a] font-bold py-5 rounded-3xl text-center tracking-widest active:scale-[0.985] flex items-center justify-center gap-3"
-      >
-        📱 HAND OFF REPORT TO HOMEOWNER
-      </button>
-
-      {showQR && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6" onClick={() => setShowQR(false)}>
-          <div className="bg-white p-8 rounded-3xl text-center max-w-[300px]" onClick={e => e.stopPropagation()}>
-            <div className="text-[#0a0e1a] mb-6">
-              <div className="text-xl font-bold mb-2 tracking-wider">SCAN TO VIEW REPORT</div>
-              <div className="text-sm text-black/60">Opens live property report on phone</div>
-            </div>
-            <div className="bg-white p-4 inline-block mb-6 shadow-2xl">
-              <QRCode value={reportUrl} size={220} />
-            </div>
-            <div className="text-xs text-black/50 font-mono break-all leading-tight mb-6">
-              {reportUrl}
-            </div>
-            <button
-              onClick={() => setShowQR(false)}
-              className="text-xs uppercase tracking-widest text-black/60 hover:text-black"
-            >
-              CLOSE
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 interface Property {
   id: string
@@ -84,14 +25,30 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
   const { id } = await params
   const supabase = createSupabaseAdminClient()
 
-  const { data: property, error } = await supabase
-    .from('properties')
-    .select('id, address, neighborhood, field_score, field_note, observations, roof_age')
-    .eq('id', id)
-    .single()
+  let property
+  let error
+  try {
+    const { data, error: queryError } = await supabase
+      .from('properties')
+      .select('id, address, neighborhood, field_score, field_note, observations')
+      .eq('id', id)
+      .single()
+    property = data
+    error = queryError
+  } catch (e) {
+    error = e
+  }
 
   if (error || !property) {
-    notFound()
+    return (
+      <div className="min-h-screen bg-[#0a0e1a] text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🏠</div>
+          <h2 className="text-2xl font-bold text-white mb-2">Property not found</h2>
+          <p className="text-white/60">The requested property could not be loaded.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -158,14 +115,14 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
             <div>
               <div className="font-mono text-xs text-white/50">Regional estimate — Houston-area climate × roof age. Property-specific data pending full analysis.</div>
               <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
-                <div>~{Math.round((property.roof_age || 15) * 101)} days over 90°F</div>
-                <div>~{Math.round((property.roof_age || 15) * 4)} nights ≤ freezing</div>
-                <div>~{Math.round((property.roof_age || 15) * 100)} rain days</div>
+                <div>~{Math.round(ASSUMED_ROOF_AGE * 101)} days over 90°F</div>
+                <div>~{Math.round(ASSUMED_ROOF_AGE * 4)} nights ≤ freezing</div>
+                <div>~{Math.round(ASSUMED_ROOF_AGE * 100)} rain days</div>
                 <div>~5 months/year at UV index 7+</div>
               </div>
             </div>
             <div className="text-[#d4af37] text-sm border-t border-white/10 pt-4">
-              {(property.roof_age || 15)} years of accumulated Houston weather stress 🌧️ accelerates shingle aging and hidden damage.
+              {ASSUMED_ROOF_AGE} years of accumulated Houston weather stress 🌧️ accelerates shingle aging and hidden damage.
             </div>
           </div>
         </div>

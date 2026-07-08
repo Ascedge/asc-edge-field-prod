@@ -118,6 +118,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       lookupId,
       matched,
+      matchedPropertyId,
       address: propertyData?.address || address,
       photos: processedPhotos,
     });

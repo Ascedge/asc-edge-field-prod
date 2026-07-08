@@ -122,6 +122,14 @@ function PassportInner() {
             <div className="text-[#C9A227] text-7xl mb-6">&#10003;</div>
             <h2 className="text-3xl font-bold mb-4">We&apos;ve Got It</h2>
             <p className="text-white/70 text-lg max-w-[280px]">A roof documentation rep will reach out shortly. Thank you for protecting your home.</p>
+            {hasPhotos && lookupResult?.matchedPropertyId && (
+              <a
+                href={`/report/${lookupResult.matchedPropertyId}`}
+                className="mt-8 bg-[#C9A227] text-black font-bold py-5 px-8 rounded-3xl tracking-widest active:scale-95"
+              >
+                VIEW YOUR FULL REPORT
+              </a>
+            )}
           </div>
         ) : (
           <>

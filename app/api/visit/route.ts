@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
       : disposition === 'not_home' || disposition === 'hostile' ? 'none' : 'nurture'
     const homeownerGender = stringValue(body.homeowner_gender, 'homeowner_gender', { maxLength: 20 })
     const receptivity = typeof body.receptivity === 'number' ? body.receptivity : 2
-    const personality = receptivity >= 3 ? 'great' : receptivity <= 1 ? 'combative' : 'neutral'
     const observations = stringArrayValue(body.observations ?? [], 'observations', 20)
     const repNote = stringValue(body.private_note, 'private_note', { maxLength: 280 })
     const ghlUrl = outcome === 'booked' ? getOptionalGhlWebhookUrl() : null
@@ -48,9 +47,9 @@ export async function POST(request: NextRequest) {
         rep_id: auth.user.id,
         outcome,
         homeowner_gender: homeownerGender,
-        personality,
-        quick_observations: observations,
-        rep_note: repNote,
+        receptivity,
+        observations,
+        private_note: repNote,
         disposition,
         notes_locked: true,
         notes_submitted_at: new Date().toISOString(),

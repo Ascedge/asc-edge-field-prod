@@ -24,6 +24,8 @@ assert.match(migration, /grant update \(display_name, active_organization_id\) o
 assert.doesNotMatch(migration, /grant update on table public\.profiles to authenticated/)
 assert.doesNotMatch(migration, /create policy[^;]+photos[^;]+for delete/is)
 assert.doesNotMatch(migration, /create policy[^;]+photos[^;]+for update/is)
+assert.match(migration, /create table if not exists public\.storm_events/i)
+assert.match(migration, /rep_id = auth\.uid\(\)::text/)
 
 for (const path of protectedRoutes) {
   const source = readFileSync(path, 'utf8')

@@ -3,6 +3,25 @@
 
 create extension if not exists pgcrypto;
 
+create table if not exists public.storm_events (
+  id uuid primary key default gen_random_uuid(),
+  event_date date not null,
+  event_type text not null,
+  county text not null,
+  state text not null default 'TX',
+  wind_mph_min integer,
+  wind_mph_max integer,
+  hail_inches numeric,
+  narrative text,
+  begin_lat numeric,
+  begin_lon numeric,
+  source text not null default 'NOAA NCEI Storm Events',
+  source_event_id text not null unique,
+  severity_score integer check (severity_score between 0 and 10),
+  created_at timestamptz not null default now()
+);
+create index if not exists storm_events_county_date_idx on public.storm_events(county, event_date desc);
+
 -- Fail before modifying application tables when the target has unreviewed legacy policies.
 do $$
 declare unexpected text;
@@ -170,12 +189,13 @@ alter table public.share_tokens enable row level security;
 alter table public.audit_events enable row level security;
 alter table public.passport_lookups enable row level security;
 alter table public.storm_events enable row level security;
+alter table public.qr_scans enable row level security;
 
 -- Remove the legacy permissive policy and deny direct anonymous access regardless of legacy policy names.
 drop policy if exists "report_events_tenant_isolation" on public.report_events;
 revoke all on table public.organizations, public.profiles, public.organization_memberships, public.properties,
   public.photos, public.visits, public.report_events, public.property_access, public.share_tokens,
-  public.audit_events, public.passport_lookups from anon;
+  public.audit_events, public.passport_lookups, public.qr_scans from anon;
 grant select on table public.organizations, public.profiles, public.organization_memberships, public.properties,
   public.photos, public.visits, public.report_events, public.property_access, public.share_tokens,
   public.audit_events, public.storm_events to authenticated;
@@ -223,7 +243,7 @@ drop policy if exists visits_authorized_select on public.visits;
 create policy visits_authorized_select on public.visits for select to authenticated using (public.can_access_property(property_id));
 drop policy if exists visits_field_insert on public.visits;
 create policy visits_field_insert on public.visits for insert to authenticated
-with check (rep_id = auth.uid() and public.is_org_member(organization_id, array['platform_admin','licensee_owner','manager','inspector']::public.app_role[]));
+with check (rep_id = auth.uid()::text and public.is_org_member(organization_id, array['platform_admin','licensee_owner','manager','inspector']::public.app_role[]));
 
 drop policy if exists report_events_authorized_select on public.report_events;
 create policy report_events_authorized_select on public.report_events for select to authenticated using (public.can_access_property(property_id));

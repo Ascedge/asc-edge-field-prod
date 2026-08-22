@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseAdminClient } from '@/lib/supabase'
 import { serverError, uuidValue } from '@/lib/http'
+import { requirePropertyAccess } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,7 +8,7 @@ export async function GET(_request: NextRequest, context: RouteContext<'/api/pro
   try {
     const { id: rawId } = await context.params
     const id = uuidValue(rawId, 'property id')
-    const supabase = createSupabaseAdminClient()
+    const { supabase } = await requirePropertyAccess(id)
     const { data, error } = await supabase
       .from('properties')
       .select('id, address, neighborhood, field_score, observations')

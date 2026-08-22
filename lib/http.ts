@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { AuthorizationError } from '@/lib/auth'
 
 export type JsonRecord = Record<string, unknown>
 
@@ -22,6 +23,9 @@ export const badRequest = (message: string) =>
   NextResponse.json({ error: message }, { status: 400 })
 
 export const serverError = (error: unknown) => {
+  if (error instanceof AuthorizationError) {
+    return NextResponse.json({ error: error.message }, { status: error.status })
+  }
   console.error('Request failed:', errorMessage(error))
   return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
 }

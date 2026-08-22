@@ -1,7 +1,8 @@
 
 
-import { createSupabaseAdminClient } from '@/lib/supabase'
-import { getAppUrl, getGoogleMapsApiKey } from '@/lib/env'
+import { getGoogleMapsApiKey } from '@/lib/env'
+import { AuthorizationError, requirePropertyAccess } from '@/lib/auth'
+import { redirect } from 'next/navigation'
 import DamageChecklist from '../../../components/DamageChecklist'
 import PreKnockCapture from '../../../components/PreKnockCapture'
 import StormReviewHistory from '../../../components/StormReviewHistory'
@@ -14,9 +15,16 @@ export const dynamic = 'force-dynamic'
 
 export default async function PropertyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = createSupabaseAdminClient()
+  let auth
+  try {
+    auth = await requirePropertyAccess(id)
+  } catch (error) {
+    if (error instanceof AuthorizationError && error.status === 401) redirect(`/auth/sign-in?next=/property/${id}`)
+    if (error instanceof AuthorizationError) redirect('/')
+    throw error
+  }
+  const supabase = auth.supabase
   const googleMapsApiKey = getGoogleMapsApiKey()
-  const appUrl = getAppUrl()
 
   let property
   let error
@@ -132,7 +140,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
           photosCollected={photosCollected ?? 0}
         />
 
-        <HandOffReport propertyId={property.id} appUrl={appUrl} />
+        <HandOffReport propertyId={property.id} />
 
         <a href={`/property/${property.id}/present`} className="block mt-8 w-full bg-[#d4af37] hover:bg-[#e5c15c] text-[#0a0e1a] font-bold py-5 rounded-3xl text-center tracking-widest active:scale-[0.985]">
           → HOMEOWNER ANSWERED — START CAROUSEL

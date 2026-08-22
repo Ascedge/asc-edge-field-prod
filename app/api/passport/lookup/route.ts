@@ -57,19 +57,16 @@ export async function POST(request: NextRequest) {
 
     let matched = false;
     let matchedPropertyId = null;
-    let photosData: any[] = [];
 
     if (propertyData) {
       matchedPropertyId = propertyData.id;
 
-      const { data: photos } = await supabase
+      const { count } = await supabase
         .from('photos')
-        .select('id, storage_url, created_at, phase')
+        .select('id', { count: 'exact', head: true })
         .eq('property_id', propertyData.id)
-        .order('created_at', { ascending: false });
-
-      photosData = photos || [];
-      matched = photosData.length > 0;
+        .eq('phase', 'pre_knock');
+      matched = (count || 0) > 0;
     }
 
     // Always log the lookup — matched or not
@@ -92,34 +89,11 @@ export async function POST(request: NextRequest) {
 
     const lookupId = lookupRow?.id;
 
-    // Photos: pass storage_url through; sign only if it's a Supabase storage object path
-    const processedPhotos = await Promise.all(
-      photosData.map(async (photo: any) => {
-        let url = photo.storage_url;
-        if (url && url.includes('supabase.co/storage/v1/object')) {
-          const marker = '/property-photos/';
-          const idx = url.indexOf(marker);
-          if (idx !== -1) {
-            const objectPath = url.slice(idx + marker.length);
-            const { data: signed } = await supabase.storage
-              .from('property-photos')
-              .createSignedUrl(objectPath, 3600);
-            if (signed?.signedUrl) url = signed.signedUrl;
-          }
-        }
-        return {
-          url,
-          taken_at: photo.created_at,
-        };
-      })
-    );
-
     return NextResponse.json({
       lookupId,
       matched,
-      matchedPropertyId,
       address: propertyData?.address || address,
-      photos: processedPhotos,
+      photos: [],
     });
   } catch (error) {
     if (error instanceof Error && /required|must be/.test(error.message)) {

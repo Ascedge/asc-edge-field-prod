@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase';
 import { numberValue, readJsonObject, serverError, stringArrayValue, uuidValue } from '@/lib/http';
+import { requirePropertyAccess } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const observations = stringArrayValue(body.observations, 'observations', 20);
     const fieldScore = numberValue(body.field_score, 'field_score', 0, 10);
 
-    const supabase = createSupabaseAdminClient();
+    const { supabase } = await requirePropertyAccess(propertyId);
 
     const { error } = await supabase
       .from('properties')

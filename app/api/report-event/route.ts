@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseAdminClient } from '@/lib/supabase'
 import { numberValue, readJsonObject, serverError, stringValue, uuidValue } from '@/lib/http'
+import { requirePropertyAccess } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,7 +20,8 @@ export async function POST(request: NextRequest) {
     const variant = stringValue(body.variant ?? 'A', 'variant', { required: true, maxLength: 20 })!
     const visit_id = body.visit_id == null ? null : uuidValue(body.visit_id, 'visit_id')
 
-    const supabase = createSupabaseAdminClient()
+    const auth = await requirePropertyAccess(property_id)
+    const supabase = auth.supabase
 
     const { error } = await supabase
       .from('report_events')
@@ -31,7 +32,8 @@ export async function POST(request: NextRequest) {
         slide_index,
         cta,
         variant,
-        tenant_id: 'gary',
+        organization_id: auth.organization_id,
+        tenant_id: auth.organization_id,
       })
 
     if (error) {

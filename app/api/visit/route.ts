@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseAdminClient } from '@/lib/supabase'
 import { getOptionalGhlWebhookUrl } from '@/lib/env'
 import { readJsonObject, serverError, stringArrayValue, stringValue, uuidValue } from '@/lib/http'
+import { requirePropertyAccess } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,7 +27,8 @@ export async function POST(request: NextRequest) {
     const repNote = stringValue(body.private_note, 'private_note', { maxLength: 280 })
     const ghlUrl = outcome === 'booked' ? getOptionalGhlWebhookUrl() : null
 
-    const supabase = createSupabaseAdminClient()
+    const auth = await requirePropertyAccess(propertyId)
+    const supabase = auth.supabase
 
     const { data: property, error: propertyError } = await supabase
       .from('properties')
@@ -43,6 +44,8 @@ export async function POST(request: NextRequest) {
       .from('visits')
       .insert({
         property_id: propertyId,
+        organization_id: auth.organization_id,
+        rep_id: auth.user.id,
         outcome,
         homeowner_gender: homeownerGender,
         personality,
@@ -51,7 +54,7 @@ export async function POST(request: NextRequest) {
         disposition,
         notes_locked: true,
         notes_submitted_at: new Date().toISOString(),
-        tenant_id: 'gary',
+        tenant_id: auth.organization_id,
       })
       .select('id')
       .single()
@@ -68,6 +71,7 @@ export async function POST(request: NextRequest) {
           visit_id: visit.id,
           property_id: propertyId,
           address: property.address,
+          representative_id: auth.user.id,
           disposition,
           outcome,
           timestamp: new Date().toISOString(),

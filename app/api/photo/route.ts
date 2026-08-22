@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseAdminClient } from '@/lib/supabase'
 import { serverError, stringValue, uuidValue } from '@/lib/http'
 import { validateImage } from '@/lib/uploads'
+import { requirePropertyAccess } from '@/lib/auth'
+import { removeFailedEvidenceUpload } from '@/lib/storage-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,9 +22,9 @@ export async function POST(request: NextRequest) {
     }
 
     const { extension } = await validateImage(fileValue)
-    const fileName = `${propertyId}/${phase}/${crypto.randomUUID()}.${extension}`
-
-    const supabase = createSupabaseAdminClient()
+    const auth = await requirePropertyAccess(propertyId)
+    const supabase = auth.supabase
+    const fileName = `${auth.organization_id}/${propertyId}/${phase}/${crypto.randomUUID()}.${extension}`
 
     const { data: property, error: propertyError } = await supabase
       .from('properties')
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     // Upload to Storage
     const { error: uploadError } = await supabase.storage
-      .from('property-photos')
+      .from('property-evidence')
       .upload(fileName, fileValue, {
         contentType: fileValue.type,
         upsert: false,
@@ -47,33 +48,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: uploadError.message }, { status: 500 })
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('property-photos')
-      .getPublicUrl(fileName)
-
-    const storageUrl = urlData.publicUrl
+    const { data: urlData, error: signedUrlError } = await supabase.storage
+      .from('property-evidence')
+      .createSignedUrl(fileName, 300)
+    if (signedUrlError || !urlData?.signedUrl) {
+      await removeFailedEvidenceUpload(fileName)
+      throw signedUrlError || new Error('Unable to create signed image URL')
+    }
 
     // Insert into photos table (only columns that exist per instructions)
     const { data: photo, error: insertError } = await supabase
       .from('photos')
       .insert({
         property_id: propertyId,
+        organization_id: auth.organization_id,
+        uploaded_by: auth.user.id,
         phase,
-        storage_url: storageUrl,
-        tenant_id: 'gary',
+        storage_path: fileName,
+        storage_url: fileName,
+        original_filename: fileValue.name.slice(0, 255),
+        server_received_at: new Date().toISOString(),
+        tenant_id: auth.organization_id,
       })
       .select('id, storage_url')
       .single()
 
     if (insertError) {
-      await supabase.storage.from('property-photos').remove([fileName])
+      await removeFailedEvidenceUpload(fileName)
       return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
 
     return NextResponse.json({
       photo_id: photo.id,
-      url: storageUrl,
+      url: urlData.signedUrl,
     })
   } catch (error) {
     if (error instanceof Error && /required|UUID|JPEG|PNG|WebP|10 MB|empty|contents/.test(error.message)) {

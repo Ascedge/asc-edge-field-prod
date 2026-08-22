@@ -1,6 +1,6 @@
 'use server';
 
-import { createSupabaseAdminClient } from '@/lib/supabase';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 type StormEvent = {
   id: string;
@@ -63,7 +63,7 @@ function StormCard({ event, mostRecent }: { event: StormEvent; mostRecent?: bool
 }
 
 export default async function StormReviewHistory({ county = 'Harris' }: { county?: string }) {
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseServerClient();
   const normalizedCounty = county
     .trim()
     .toLowerCase()

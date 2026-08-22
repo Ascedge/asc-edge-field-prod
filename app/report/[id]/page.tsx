@@ -1,20 +1,30 @@
-import { createSupabaseAdminClient } from '@/lib/supabase';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import StormReviewHistory from '../../../components/StormReviewHistory';
 import { getGoogleMapsApiKey } from '@/lib/env';
 import ReportOpenTracker from '@/components/ReportOpenTracker';
+import { AuthorizationError, requirePropertyAccess } from '@/lib/auth';
+import { getSignedPhotoUrl } from '@/lib/photo-urls';
 
 export const dynamic = 'force-dynamic';
 
 interface Photo {
   id: string;
   storage_url: string;
+  storage_path?: string | null;
   phase: string;
 }
 
 export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = createSupabaseAdminClient();
+  let auth;
+  try {
+    auth = await requirePropertyAccess(id);
+  } catch (error) {
+    if (error instanceof AuthorizationError && error.status === 401) redirect(`/auth/sign-in?next=/report/${id}`);
+    if (error instanceof AuthorizationError) notFound();
+    throw error;
+  }
+  const supabase = auth.supabase;
   const googleMapsApiKey = getGoogleMapsApiKey();
 
   const { data: property, error: propError } = await supabase
@@ -29,10 +39,12 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
 
   const { data: photosData } = await supabase
     .from('photos')
-    .select('id, storage_url, phase')
+    .select('id, storage_url, storage_path, phase')
     .eq('property_id', id)
     .order('created_at', { ascending: true });
-  const photos: Photo[] = photosData || [];
+  const photos: Photo[] = await Promise.all((photosData || []).map(async (photo) => {
+    return { ...photo, storage_url: await getSignedPhotoUrl(supabase, photo) };
+  }));
 
   const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=640x360&location=${encodeURIComponent(property.address)}&key=${googleMapsApiKey}`;
   const satelliteUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(property.address)}&zoom=19&size=640x360&maptype=satellite&key=${googleMapsApiKey}`;

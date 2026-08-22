@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseAdminClient } from '@/lib/supabase'
 import { readJsonObject, serverError, stringValue } from '@/lib/http'
+import { requireFieldContext } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,13 +15,15 @@ export async function POST(request: NextRequest) {
       .trim()
       .replace(/\s+/g, ' ')
 
-    const supabase = createSupabaseAdminClient()
+    const auth = await requireFieldContext()
+    const supabase = auth.supabase
 
     // Exact match first
     const { data: existing, error: findError } = await supabase
       .from('properties')
       .select('id, address, normalized_address, tenant_id, claim_status, neighborhood, field_score, field_note')
       .eq('normalized_address', normalizedAddress)
+      .eq('organization_id', auth.organization_id)
       .single()
 
     if (existing) {
@@ -34,6 +36,7 @@ export async function POST(request: NextRequest) {
       .from('properties')
       .select('id, address, normalized_address, tenant_id, claim_status, neighborhood, field_score, field_note')
       .ilike('address', partial)
+      .eq('organization_id', auth.organization_id)
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
@@ -52,7 +55,8 @@ export async function POST(request: NextRequest) {
       .insert({
         address,
         normalized_address: normalizedAddress,
-        tenant_id: 'gary',
+        organization_id: auth.organization_id,
+        tenant_id: auth.organization_id,
         claim_status: 'unclaimed',
         neighborhood: null,
         field_score: null,

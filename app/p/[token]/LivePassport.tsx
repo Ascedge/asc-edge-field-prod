@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import type { SharedPassport } from '@/lib/share-tokens'
+import PassportExperience from '@/components/PassportExperience'
+import { PASSPORT_SOURCES } from '@/lib/passport-sources'
 
 const labels: Record<string, string> = {
   preliminary: 'Preliminary', awaiting_homeowner_authorization: 'Awaiting homeowner authorization', authorized: 'Authorized',
@@ -39,6 +41,17 @@ export default function LivePassport({ token, initialPassport }: { token: string
     if (response.ok) await refresh()
     setSubmitting(false)
   }
+
+  if (passport.authorization?.decision === 'approved') return <PassportExperience
+    property={{
+      address: passport.address, neighborhood: passport.neighborhood, fieldScore: passport.fieldScore,
+      observations: passport.observations, status: passport.status, reportVersion: 1,
+    }}
+    photos={passport.photos.map((photo) => ({ ...photo, url: photo.url }))}
+    timeline={passport.timeline.map((event) => ({ id: event.id, summary: event.summary, createdAt: event.createdAt, status: event.status }))}
+    documents={[]}
+    sources={PASSPORT_SOURCES}
+  />
 
   return <main className="min-h-screen bg-[#0a0e1a] px-6 py-10 text-white"><div className="mx-auto max-w-3xl">
     <div className="text-xs font-bold tracking-[3px] text-[#d4af37]">ASC EDGE ROOF PASSPORT</div>

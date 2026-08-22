@@ -114,7 +114,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
             <div className="text-[92px] leading-none font-bold text-[#d4af37] tabular-nums">
               {property.field_score}
             </div>
-            <div className="text-xs text-white/40 mt-1">/ 10 • Insurance Likelihood</div>
+            <div className="text-xs text-white/40 mt-1">/ 10 • Visible Condition Indicator</div>
           </div>
         )}
 

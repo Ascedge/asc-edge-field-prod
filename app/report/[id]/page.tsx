@@ -1,183 +1,55 @@
-import { notFound, redirect } from 'next/navigation';
-import StormReviewHistory from '../../../components/StormReviewHistory';
-import { getGoogleMapsApiKey } from '@/lib/env';
-import ReportOpenTracker from '@/components/ReportOpenTracker';
-import { AuthorizationError, requirePropertyAccess } from '@/lib/auth';
-import { getSignedPhotoUrl } from '@/lib/photo-urls';
+import { notFound, redirect } from 'next/navigation'
+import { AuthorizationError, requirePropertyAccess } from '@/lib/auth'
+import { getSignedPhotoUrl } from '@/lib/photo-urls'
+import { PASSPORT_SOURCES } from '@/lib/passport-sources'
+import PassportExperience from '@/components/PassportExperience'
+import ReportOpenTracker from '@/components/ReportOpenTracker'
 
-export const dynamic = 'force-dynamic';
-
-interface Photo {
-  id: string;
-  storage_url: string;
-  storage_path?: string | null;
-  phase: string;
-}
+export const dynamic = 'force-dynamic'
 
 export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  let auth;
+  const { id } = await params
+  let auth
   try {
-    auth = await requirePropertyAccess(id);
+    auth = await requirePropertyAccess(id)
   } catch (error) {
-    if (error instanceof AuthorizationError && error.status === 401) redirect(`/auth/sign-in?next=/report/${id}`);
-    if (error instanceof AuthorizationError) notFound();
-    throw error;
+    if (error instanceof AuthorizationError && error.status === 401) redirect(`/auth/sign-in?next=/report/${id}`)
+    if (error instanceof AuthorizationError) notFound()
+    throw error
   }
-  const supabase = auth.supabase;
-  const googleMapsApiKey = getGoogleMapsApiKey();
+  const supabase = auth.supabase
+  const { data: property, error } = await supabase.from('properties')
+    .select('id, address, neighborhood, field_score, observations, roof_age, report_status, report_version')
+    .eq('id', id).single()
+  if (error || !property) notFound()
 
-  const { data: property, error: propError } = await supabase
-    .from('properties')
-    .select('id, address, neighborhood, field_score, observations, roof_age')
-    .eq('id', id)
-    .single();
+  const [{ data: photoRows }, { data: timelineRows }, { data: characteristic }, { data: documentRows }, { data: profile }] = await Promise.all([
+    supabase.from('photos').select('id, storage_url, storage_path, phase, category, caption, created_at').eq('property_id', id).order('created_at'),
+    supabase.from('property_timeline_events').select('id, summary, created_at, report_status').eq('property_id', id).order('created_at'),
+    supabase.from('property_characteristics').select('roof_covering, roof_age_years, footprint_sqft, roof_pitch_multiplier, waste_factor').eq('property_id', id).maybeSingle(),
+    supabase.from('property_documents').select('id, title, document_type, year, version').eq('property_id', id).order('created_at'),
+    supabase.from('profiles').select('display_name').eq('user_id', auth.user.id).maybeSingle(),
+  ])
+  const photos = await Promise.all((photoRows || []).map(async (photo) => ({
+    id: photo.id, url: await getSignedPhotoUrl(supabase, photo), phase: photo.phase,
+    category: photo.category, caption: photo.caption, createdAt: photo.created_at,
+  })))
 
-  if (propError || !property) {
-    notFound();
-  }
-
-  const { data: photosData } = await supabase
-    .from('photos')
-    .select('id, storage_url, storage_path, phase')
-    .eq('property_id', id)
-    .order('created_at', { ascending: true });
-  const photos: Photo[] = await Promise.all((photosData || []).map(async (photo) => {
-    return { ...photo, storage_url: await getSignedPhotoUrl(supabase, photo) };
-  }));
-
-  const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=640x360&location=${encodeURIComponent(property.address)}&key=${googleMapsApiKey}`;
-  const satelliteUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(property.address)}&zoom=19&size=640x360&maptype=satellite&key=${googleMapsApiKey}`;
-
-  return (
-    <div className="min-h-screen bg-[#0a0e1a] text-white pb-16">
-      <ReportOpenTracker propertyId={id} />
-      {/* Header */}
-      <header className="bg-black border-b border-[#d4af37]/60 py-6 px-6 flex items-center gap-4">
-        <img src="/logo.png" alt="ASC EDGE" className="h-10 w-auto" />
-        <div>
-          <div className="text-[#d4af37] font-bold tracking-[4px] text-3xl">ASC</div>
-          <div className="text-[10px] text-white/60 -mt-1 tracking-[2px]">EDGE • ROOF ASSET DOCUMENTATION</div>
-        </div>
-      </header>
-
-      <main className="max-w-2xl mx-auto px-6 pt-10">
-        <div className="text-center mb-10">
-          <div className="inline-block bg-[#d4af37] text-[#0a0e1a] text-xs font-bold tracking-widest px-6 py-1 rounded-full mb-4">OFFICIAL RECORD</div>
-          <h1 className="text-4xl font-bold leading-tight text-white mb-2">{property.address}</h1>
-          {property.neighborhood && (
-            <p className="text-white/60 text-lg">{property.neighborhood}</p>
-          )}
-        </div>
-
-        {/* Imagery */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
-          <div className="rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-            <img src={streetViewUrl} alt="Street View" className="w-full h-auto" />
-            <div className="bg-black/80 text-[10px] text-center py-2 text-white/50">STREET VIEW</div>
-          </div>
-          <div className="rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-            <img src={satelliteUrl} alt="Satellite" className="w-full h-auto" />
-            <div className="bg-black/80 text-[10px] text-center py-2 text-white/50">SATELLITE / OVERHEAD</div>
-          </div>
-        </div>
-
-        {/* Score */}
-        {property.field_score !== null && (
-          <div className="bg-gradient-to-b from-[#111827] to-black border border-[#d4af37]/40 rounded-3xl p-10 text-center mb-12 shadow-inner">
-            <div className="text-[#d4af37] text-sm tracking-[3px] mb-3">ROOF CONDITION SCORE</div>
-            <div className="text-[120px] leading-none font-bold text-[#d4af37] tabular-nums mb-2">
-              {property.field_score}
-            </div>
-            <div className="text-white/70 text-lg">/ 10 — Based on visible exterior indicators</div>
-          </div>
-        )}
-
-        {/* Documented Findings */}
-        {property.observations && property.observations.length > 0 && (
-          <div className="mb-12">
-            <div className="uppercase text-[#d4af37] text-xs tracking-widest mb-6 border-b border-[#d4af37]/30 pb-2">DOCUMENTED FINDINGS</div>
-            <ul className="space-y-4">
-              {(property.observations || []).map((obs: string, i: number) => (
-                <li key={i} className="flex gap-4 bg-[#111827]/70 border border-white/10 rounded-2xl p-5">
-                  <div className="text-[#d4af37] text-2xl font-light">•</div>
-                  <div className="text-white/90 text-[17px]">{obs}</div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Photos */}
-        {photos.length > 0 && (
-          <div className="mb-16">
-            <div className="uppercase text-[#d4af37] text-xs tracking-widest mb-6 border-b border-[#d4af37]/30 pb-2">FIELD PHOTOS</div>
-            <div className="grid grid-cols-2 gap-4">
-              {photos.map((photo) => (
-                <div key={photo.id} className="rounded-3xl overflow-hidden border border-white/10 aspect-video bg-black">
-                  <img src={photo.storage_url} alt="Field photo" className="w-full h-full object-cover" />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Why This Matters */}
-        <div className="bg-[#111827] border border-[#d4af37]/30 rounded-3xl p-10 mb-12">
-          <div className="uppercase text-[#d4af37] text-xs tracking-widest mb-6">WHY THIS MATTERS</div>
-          <div className="space-y-8 text-white/80 leading-relaxed text-[15px]">
-            <p>An undocumented roof is a hidden liability. Insurance carriers increasingly treat undocumented repairs or damage as <span className="text-white">“wear and tear”</span>, denying claims even when a storm caused the issue.</p>
-            
-            <p>This report creates a timestamped, photographic baseline. It protects both the homeowner and future buyers by documenting the roof’s condition at the time of inspection.</p>
-
-            <p className="text-[#d4af37] font-medium">Texas Department of Insurance and major carriers have published guidance on claim disputes involving undocumented roofs. A clear record strengthens your position in any future adjustment.</p>
-          </div>
-        </div>
-
-        {/* Cumulative Environmental Exposure */}
-        <div className="mb-12">
-          <div className="uppercase text-[#d4af37] text-xs tracking-widest mb-4">CUMULATIVE ENVIRONMENTAL EXPOSURE</div>
-          <div className="bg-[#111827] border border-white/10 rounded-3xl p-8 text-white/80">
-            <div className="font-mono text-xs text-white/50 mb-4">Regional estimate — Houston-area climate × roof age. Property-specific data pending full analysis.</div>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-              <div>~{Math.round((property.roof_age || 15) * 101)} days over 90°F</div>
-              <div>~{Math.round((property.roof_age || 15) * 4)} nights ≤ freezing</div>
-              <div>~{Math.round((property.roof_age || 15) * 100)} rain days</div>
-              <div>~5 months/year at UV index 7+</div>
-            </div>
-            <div className="mt-6 text-[#d4af37] text-sm pt-4 border-t border-white/10">
-              {(property.roof_age || 15)} years of accumulated Houston weather stress 🌧️ accelerates shingle aging and hidden damage.
-            </div>
-          </div>
-        </div>
-
-        <StormReviewHistory county="Harris" />
-
-        {/* Future capabilities */}
-        <div className="mb-16">
-          <div className="uppercase text-[#d4af37] text-xs tracking-widest mb-6">FUTURE CAPABILITIES</div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {['Autonomous Drone Flight Reports', 'AI Glasses Inspection Reports'].map((title) => (
-              <div key={title} className="rounded-3xl border border-white/10 bg-[#111827] p-6">
-                <div className="mb-3 inline-block rounded-full bg-[#d4af37]/10 px-3 py-1 text-[10px] font-bold tracking-widest text-[#d4af37]">
-                  COMING SOON
-                </div>
-                <h2 className="text-xl font-semibold text-white">{title}</h2>
-                <p className="mt-3 text-sm leading-relaxed text-white/60">
-                  This capability is under development and is not included in the current Roof Passport.
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <footer className="border-t border-white/10 pt-12 text-center text-xs text-white/40">
-          <div className="font-mono tracking-widest text-[#d4af37] mb-2">ASC EDGE FIELD SERVICES</div>
-          <div>281-357-9090 • Professional Roof Documentation • Houston Metro</div>
-          <div className="mt-8 text-[10px]">This is an independent third-party documentation record. Not affiliated with any insurance carrier.</div>
-        </footer>
-      </main>
-    </div>
-  );
+  return <>
+    <ReportOpenTracker propertyId={id} />
+    <PassportExperience
+      property={{
+        address: property.address, neighborhood: property.neighborhood, fieldScore: property.field_score,
+        observations: property.observations || [], roofAge: characteristic?.roof_age_years ?? property.roof_age,
+        status: property.report_status, reportVersion: property.report_version,
+        inspectionDate: timelineRows?.[0]?.created_at || null, representative: profile?.display_name || auth.user.email,
+        roofCovering: characteristic?.roof_covering, footprintSqft: characteristic?.footprint_sqft,
+        pitchMultiplier: characteristic?.roof_pitch_multiplier, wasteFactor: characteristic?.waste_factor,
+      }}
+      photos={photos}
+      timeline={(timelineRows || []).map((item) => ({ id: item.id, summary: item.summary, createdAt: item.created_at, status: item.report_status }))}
+      documents={documentRows || []}
+      sources={PASSPORT_SOURCES}
+    />
+  </>
 }

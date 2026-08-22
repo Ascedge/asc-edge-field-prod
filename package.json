@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:authorization": "node scripts/check-authorization-contract.mjs && tsx scripts/check-token-crypto.ts"
+    "test:authorization": "node scripts/check-authorization-contract.mjs && tsx scripts/check-token-crypto.ts",
+    "test:workflow": "node scripts/check-workflow-contract.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.8.0",

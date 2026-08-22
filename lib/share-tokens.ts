@@ -12,7 +12,10 @@ export type SharedPassport = {
   neighborhood: string | null
   fieldScore: number | null
   observations: string[]
-  photos: Array<{ id: string; url: string; phase: string; createdAt: string }>
+  status: string
+  authorization: { decision: string; decidedAt: string } | null
+  photos: Array<{ id: string; url: string; phase: string; category: string | null; caption: string | null; createdAt: string }>
+  timeline: Array<{ id: string; eventType: string; status: string | null; summary: string; createdAt: string }>
   expiresAt: string
 }
 
@@ -30,24 +33,39 @@ export async function resolveShareToken(rawToken: string): Promise<SharedPasspor
     .single()
   if (shareError || !share) return null
 
-  const [{ data: property, error: propertyError }, { data: photoRows, error: photosError }] = await Promise.all([
+  const [{ data: property, error: propertyError }, { data: authorization }] = await Promise.all([
     supabase
       .from('properties')
-      .select('id, address, neighborhood, field_score, observations')
+      .select('id, address, neighborhood, field_score, observations, report_status')
       .eq('id', share.property_id)
       .single(),
-    supabase
-      .from('photos')
-      .select('id, storage_url, storage_path, phase, created_at')
+    supabase.from('property_authorizations')
+      .select('decision, created_at')
       .eq('property_id', share.property_id)
-      .eq('phase', 'pre_knock')
+      .eq('authorization_type', 'inspection_documentation')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ])
+  if (propertyError || !property) return null
+
+  let photoQuery = supabase.from('photos')
+    .select('id, storage_url, storage_path, phase, category, caption, created_at')
+    .eq('property_id', share.property_id)
+    .order('created_at', { ascending: true })
+  if (authorization?.decision !== 'approved') photoQuery = photoQuery.eq('phase', 'pre_knock')
+  const [{ data: photoRows, error: photosError }, { data: timelineRows }] = await Promise.all([
+    photoQuery,
+    supabase.from('property_timeline_events')
+      .select('id, event_type, report_status, summary, created_at')
+      .eq('property_id', share.property_id)
       .order('created_at', { ascending: true }),
   ])
-  if (propertyError || photosError || !property) return null
+  if (photosError) return null
 
   const photos = await Promise.all((photoRows || []).map(async (photo) => {
     const url = await getSignedPhotoUrl(supabase, photo)
-    return { id: photo.id, url, phase: photo.phase, createdAt: photo.created_at }
+    return { id: photo.id, url, phase: photo.phase, category: photo.category, caption: photo.caption, createdAt: photo.created_at }
   }))
 
   await supabase.from('share_tokens').update({ last_accessed_at: now }).eq('id', share.id)
@@ -56,7 +74,13 @@ export async function resolveShareToken(rawToken: string): Promise<SharedPasspor
     neighborhood: property.neighborhood,
     fieldScore: property.field_score,
     observations: property.observations || [],
+    status: property.report_status,
+    authorization: authorization ? { decision: authorization.decision, decidedAt: authorization.created_at } : null,
     photos,
+    timeline: (timelineRows || []).map((event) => ({
+      id: event.id, eventType: event.event_type, status: event.report_status,
+      summary: event.summary, createdAt: event.created_at,
+    })),
     expiresAt: share.expires_at,
   }
 }

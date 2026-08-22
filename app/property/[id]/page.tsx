@@ -8,6 +8,7 @@ import PreKnockCapture from '../../../components/PreKnockCapture'
 import StormReviewHistory from '../../../components/StormReviewHistory'
 import LogVisitForm from '../../../components/LogVisitForm'
 import HandOffReport from './HandOffReport'
+import FullDocumentationCapture from '../../../components/FullDocumentationCapture'
 
 const ASSUMED_ROOF_AGE = 15; // until real roof_age data exists
 
@@ -31,7 +32,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
   try {
     const { data, error: queryError } = await supabase
       .from('properties')
-      .select('id, address, neighborhood, field_score, field_note, observations')
+      .select('id, address, neighborhood, field_score, field_note, observations, report_status')
       .eq('id', id)
       .single()
     property = data
@@ -57,6 +58,16 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
     .select('id', { count: 'exact', head: true })
     .eq('property_id', property.id)
 
+  const { data: authorization } = await supabase
+    .from('property_authorizations')
+    .select('decision, created_at')
+    .eq('property_id', property.id)
+    .eq('authorization_type', 'inspection_documentation')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const fullDocumentationAuthorized = authorization?.decision === 'approved'
+
   return (
     <div className="min-h-screen bg-[#0a0e1a] text-white pb-24">
       {/* Header */}
@@ -75,6 +86,10 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
           {property.neighborhood && (
             <p className="text-white/60 mt-1">{property.neighborhood}</p>
           )}
+        </div>
+
+        <div className="mb-6 rounded-2xl border border-[#d4af37]/25 bg-[#d4af37]/10 px-4 py-3 text-sm text-[#f0d77f]">
+          Report status: {property.report_status.replaceAll('_', ' ')}
         </div>
 
         {/* Real Google Street View + Satellite imagery (using the provided keys) */}
@@ -106,6 +121,8 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
         <DamageChecklist propertyId={property.id} initialScore={property.field_score || 8.5} initialObservations={property.observations || []} />
 
         <PreKnockCapture propertyId={property.id} />
+
+        <FullDocumentationCapture propertyId={property.id} authorized={fullDocumentationAuthorized} />
 
         {property.field_note && (
           <div className="bg-[#111827]/70 border border-white/10 rounded-2xl p-6">
@@ -147,7 +164,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
         </a>
 
         <div className="mt-12 text-center text-xs text-white/30">
-          S4 — QR hand-off to /report/[id] (live)
+          Secure QR hand-off • authorization-gated documentation • immutable timeline
         </div>
       </main>
     </div>

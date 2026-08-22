@@ -17,6 +17,8 @@ interface PhotoItem {
 export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [category, setCategory] = useState('front_elevation');
+  const [caption, setCaption] = useState('Ground-level exterior view; visual documentation only.');
 
   const retryUpload = async (tempId: string, propertyId: string) => {
     const photo = photos.find(p => p.id === tempId);
@@ -27,6 +29,8 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
     const formData = new FormData();
     formData.append('property_id', propertyId);
     formData.append('phase', 'pre_knock');
+    formData.append('category', category);
+    formData.append('caption', caption);
     formData.append('image', photo.file);
 
     try {
@@ -68,6 +72,8 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
       const formData = new FormData();
       formData.append('property_id', propertyId);
       formData.append('phase', 'pre_knock');
+      formData.append('category', category);
+      formData.append('caption', caption);
       formData.append('image', file);
 
       try {
@@ -104,6 +110,18 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
 
   return (
     <div className="mb-8">
+      <div className="mb-4 rounded-3xl border border-amber-400/25 bg-amber-400/10 p-5">
+        <div className="text-xs font-bold tracking-widest text-amber-200">PRELIMINARY EXTERIOR DOCUMENTATION</div>
+        <p className="mt-2 text-sm text-white/60">Limited ground-level photos only. This is not a complete inspection.</p>
+      </div>
+      <label className="mb-2 block text-xs tracking-widest text-white/50">PHOTO VIEW</label>
+      <select value={category} onChange={(event) => setCategory(event.target.value)} className="mb-3 w-full rounded-2xl border border-white/20 bg-[#111827] p-4 text-white">
+        <option value="front_elevation">Front elevation</option>
+        <option value="left_elevation">Left / front-left overview</option>
+        <option value="right_elevation">Right / front-right overview</option>
+        <option value="visible_maintenance">Visible maintenance concern</option>
+      </select>
+      <input value={caption} onChange={(event) => setCaption(event.target.value)} maxLength={500} aria-label="Photo caption" className="mb-4 w-full rounded-2xl border border-white/20 bg-[#111827] p-4 text-white" />
       {/* Camera button (capture=environment) */}
       <button 
         onClick={() => document.getElementById('pre-knock-camera')?.click()}
@@ -188,7 +206,7 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
       )}
 
       <div className="text-center text-[10px] text-white/40 mt-6">
-        Take 2–3 front-of-house photos before the knock • phase=pre_knock
+        Recommended: front, left overview, right overview, and one visible concern when applicable.
       </div>
     </div>
   );

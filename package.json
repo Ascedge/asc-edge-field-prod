@@ -11,6 +11,7 @@
     "test:authorization": "node scripts/check-authorization-contract.mjs && tsx scripts/check-token-crypto.ts",
     "test:workflow": "node scripts/check-workflow-contract.mjs",
     "test:passport": "node scripts/check-passport-contract.mjs"
+    ,"test:recovery": "node scripts/check-p0-recovery-contract.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.8.0",

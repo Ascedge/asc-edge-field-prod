@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseAdminClient } from '@/lib/supabase'
+import { createSupabaseClient } from '@/lib/supabase'
 import { hashShareToken } from '@/lib/token-crypto'
 import { readJsonObject, serverError, stringValue } from '@/lib/http'
 
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest, context: RouteContext<'/api/pas
 
     const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null
     const userAgent = request.headers.get('user-agent') || ''
-    const supabase = createSupabaseAdminClient()
+    const supabase = createSupabaseClient()
     const { data, error } = await supabase.rpc('record_homeowner_authorization', {
       submitted_token_hash: hashShareToken(token), submitted_homeowner_name: homeownerName,
       submitted_decision: decision, submitted_ip: forwarded, submitted_user_agent: userAgent,

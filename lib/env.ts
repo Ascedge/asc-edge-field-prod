@@ -26,7 +26,10 @@ export const getAppUrl = (): string => {
   return readUrl(name, readRequired(name))
 }
 
-export const getGoogleMapsApiKey = (): string => readRequired('NEXT_PUBLIC_GOOGLE_MAPS_API_KEY')
+export const getGoogleMapsApiKey = (): string =>
+  process.env.GOOGLE_MAPS_API_KEY?.trim() || readRequired('NEXT_PUBLIC_GOOGLE_MAPS_API_KEY')
+
+export const getShareTokenEncryptionKey = (): string => readRequired('SHARE_TOKEN_ENCRYPTION_KEY')
 
 export const getOptionalGhlWebhookUrl = (): string | null => {
   const value = process.env.GHL_WEBHOOK_URL?.trim()

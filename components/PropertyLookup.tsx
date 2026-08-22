@@ -6,6 +6,8 @@ import { Home as HomeIcon, MapPin, Phone, BarChart3 } from "lucide-react";
 
 export default function PropertyLookup() {
   const [address, setAddress] = useState('')
+  const [resolved, setResolved] = useState<null | { formattedAddress: string; canonicalStreet: string; city: string; state: string; postalCode: string; county: string; latitude: number; longitude: number; placeId: string }>(null)
+  const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
@@ -16,7 +18,8 @@ export default function PropertyLookup() {
     setIsLoading(true)
 
     try {
-      const res = await fetch('/api/property', {
+      setError(null)
+      const res = await fetch('/api/address/resolve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address: address.trim() }),
@@ -24,18 +27,27 @@ export default function PropertyLookup() {
 
       const data = await res.json()
 
-      if (!res.ok || !data.property?.id) {
-        alert('Error: ' + (data.error || 'Failed to process property'))
+      if (!res.ok || !data.address) {
+        setError(data.error || 'Unable to verify that exact property')
         return
       }
-
-      // Navigate to property detail
-      router.push(`/property/${data.property.id}`)
+      setResolved(data.address)
     } catch {
-      alert('Network error. Please try again.')
+      setError('Network error. Please try again.')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const confirmProperty = async () => {
+    if (!resolved) return
+    setIsLoading(true); setError(null)
+    try {
+      const response = await fetch('/api/property', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address: resolved.formattedAddress, placeId: resolved.placeId, confirmed: true }) })
+      const data = await response.json()
+      if (!response.ok || !data.property?.id) { setError(data.error || 'Unable to create this property'); return }
+      router.push(`/property/${data.property.id}`)
+    } catch { setError('Network error. Please try again.') } finally { setIsLoading(false) }
   }
 
   return (
@@ -62,12 +74,12 @@ export default function PropertyLookup() {
             <p className="text-white/70 text-[15px]">Enter the property address below</p>
           </div>
 
-          {/* Wired address search */}
+          {/* Exact address verification precedes every property creation. */}
           <form onSubmit={handleSubmit} className="relative">
             <input
               type="text"
               value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              onChange={(e) => { setAddress(e.target.value); setResolved(null) }}
               placeholder="Enter property address"
               className="w-full bg-[#111827] border border-white/30 focus:border-[#d4af37] text-white placeholder:text-white/50 rounded-3xl px-8 py-7 text-xl outline-none transition-all text-center disabled:opacity-70"
               disabled={isLoading}
@@ -80,6 +92,11 @@ export default function PropertyLookup() {
               <MapPin className="w-6 h-6" />
             </button>
           </form>
+          {error && <p className="mt-4 rounded-2xl border border-red-300/30 bg-red-300/10 p-4 text-sm text-red-100">{error}</p>}
+          {resolved && <section className="mt-6 overflow-hidden rounded-3xl border border-[#d4af37]/40 bg-[#111827]">
+            <iframe title="Verified property map" className="h-48 w-full border-0" loading="lazy" src={`https://www.google.com/maps?q=${resolved.latitude},${resolved.longitude}&z=20&output=embed`} />
+            <div className="p-6"><div className="text-xs font-bold tracking-[2px] text-[#d4af37]">CONFIRM THIS IS THE CORRECT PROPERTY</div><h2 className="mt-3 text-xl font-semibold">{resolved.formattedAddress}</h2><dl className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-white/45">City and ZIP</dt><dd>{resolved.city}, {resolved.state} {resolved.postalCode}</dd></div><div><dt className="text-white/45">County</dt><dd>{resolved.county}</dd></div><div><dt className="text-white/45">Map pin</dt><dd>{resolved.latitude.toFixed(6)}, {resolved.longitude.toFixed(6)}</dd></div><div><dt className="text-white/45">Parcel identifier</dt><dd>Pending approved parcel source</dd></div></dl><p className="mt-4 text-xs text-white/45">Street/aerial imagery is centered on the verified rooftop pin. If Google imagery is unavailable, the property photograph will be shown after it is supplied and confirmed.</p><button type="button" disabled={isLoading} onClick={confirmProperty} className="mt-5 w-full rounded-2xl bg-[#d4af37] p-4 font-bold text-[#0a0e1a] disabled:opacity-40">YES — CREATE THIS PROPERTY</button></div>
+          </section>}
         </div>
       </main>
 

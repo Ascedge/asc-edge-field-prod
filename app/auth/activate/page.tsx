@@ -27,7 +27,8 @@ export default async function ActivatePage({
   searchParams: Promise<{ token_hash?: string; type?: string }>
 }) {
   const params = await searchParams
-  const valid = Boolean(params.token_hash && params.type && allowedTypes.has(params.type as EmailOtpType))
+  const type: EmailOtpType = params.type === 'invite' ? 'invite' : 'recovery'
+  const valid = Boolean(params.token_hash)
 
   return (
     <main className="min-h-screen bg-[#0a0e1a] px-6 py-16 text-white">
@@ -42,7 +43,7 @@ export default async function ActivatePage({
         {valid && (
           <form action={confirmPreviewAccount} className="mt-8">
             <input type="hidden" name="token_hash" value={params.token_hash} />
-            <input type="hidden" name="type" value={params.type} />
+            <input type="hidden" name="type" value={type} />
             <button type="submit" className="w-full rounded-2xl bg-[#d4af37] py-4 font-bold tracking-widest text-black">
               CONTINUE SETUP
             </button>

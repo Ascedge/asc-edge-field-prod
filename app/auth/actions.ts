@@ -27,3 +27,20 @@ export async function signOut() {
   await supabase.auth.signOut()
   redirect('/auth/sign-in')
 }
+
+export async function setInvitedPassword(formData: FormData) {
+  const password = formData.get('password')
+  const confirmation = formData.get('confirmation')
+  if (typeof password !== 'string' || password.length < 12) {
+    redirect(`/auth/set-password?error=${encodeURIComponent('Password must be at least 12 characters')}`)
+  }
+  if (password !== confirmation) {
+    redirect(`/auth/set-password?error=${encodeURIComponent('Passwords do not match')}`)
+  }
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect(`/auth/sign-in?error=${encodeURIComponent('Invite session expired. Request a new invite.')}`)
+  const { error } = await supabase.auth.updateUser({ password })
+  if (error) redirect(`/auth/set-password?error=${encodeURIComponent('Unable to set password. Request a new invite.')}`)
+  redirect('/')
+}

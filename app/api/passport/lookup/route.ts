@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase';
+import { readJsonObject, serverError, stringValue } from '@/lib/http';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const { address, source = 'qr_card' } = await request.json();
+    const body = await readJsonObject(request);
+    const address = stringValue(body.address, 'address', { required: true, maxLength: 240 })!;
+    const source = stringValue(body.source ?? 'qr_card', 'source', { required: true, maxLength: 40 })!;
     const userAgent = request.headers.get('user-agent') || '';
-
-    if (!address || typeof address !== 'string') {
-      return NextResponse.json({ error: 'Address is required' }, { status: 400 });
-    }
 
     const normalizedAddress = address
       .toLowerCase()
@@ -122,7 +121,10 @@ export async function POST(request: NextRequest) {
       address: propertyData?.address || address,
       photos: processedPhotos,
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+  } catch (error) {
+    if (error instanceof Error && /required|must be/.test(error.message)) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return serverError(error);
   }
 }

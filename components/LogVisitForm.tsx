@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Camera, Lock, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { Lock, CheckCircle2 } from 'lucide-react';
 
 interface LogVisitFormProps {
   propertyId: string;
@@ -76,7 +76,6 @@ export default function LogVisitForm({ propertyId, photosCollected }: LogVisitFo
     setSubmitting(true);
 
     const outcome = deriveOutcome(disposition as Disposition);
-    const repId = 'rep-test-001'; // placeholder per spec (can be uuid or text)
 
     try {
       const res = await fetch('/api/visit', {
@@ -84,7 +83,6 @@ export default function LogVisitForm({ propertyId, photosCollected }: LogVisitFo
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           property_id: propertyId,
-          rep_id: repId,
           outcome,
           homeowner_gender: homeownerGender,
           receptivity: personality,

@@ -47,7 +47,7 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
       } else {
         setPhotos(prev => prev.map(p => p.id === tempId ? { ...p, status: 'error', file: photo.file } : p));
       }
-    } catch (err) {
+    } catch {
       setPhotos(prev => prev.map(p => p.id === tempId ? { ...p, status: 'error', file: photo.file } : p));
     }
   };
@@ -90,7 +90,7 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
             prev.map(p => p.id === tempId ? { ...p, status: 'error' } : p)
           );
         }
-      } catch (err) {
+      } catch {
         setPhotos(prev => 
           prev.map(p => p.id === tempId ? { ...p, status: 'error' } : p)
         );

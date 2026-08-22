@@ -5,6 +5,14 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    rules: {
+      // Property evidence uses dynamic signed URLs that cannot be statically configured for next/image.
+      "@next/next/no-img-element": "off",
+      // Legacy API payloads are incrementally receiving runtime validation during the hardening checkpoints.
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

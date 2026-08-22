@@ -64,10 +64,14 @@ function StormCard({ event, mostRecent }: { event: StormEvent; mostRecent?: bool
 
 export default async function StormReviewHistory({ county = 'Harris' }: { county?: string }) {
   const supabase = createSupabaseAdminClient();
+  const normalizedCounty = county
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
   const { data } = await supabase
     .from('storm_events')
     .select('*')
-    .eq('county', county.toUpperCase())
+    .eq('county', normalizedCounty)
     .order('event_date', { ascending: false })
     .limit(8);
 
@@ -76,7 +80,7 @@ export default async function StormReviewHistory({ county = 'Harris' }: { county
   return (
     <section className="mb-12">
       <div className="uppercase text-[#d4af37] text-xs tracking-widest mb-4">STORM REVIEW HISTORY</div>
-      <p className="text-xs text-white/50 mb-6">Storm events recorded in {county} County, Texas (NOAA NCEI database).</p>
+      <p className="text-xs text-white/50 mb-6">Storm events recorded in {normalizedCounty} County, Texas (NOAA NCEI database).</p>
       
       {events.length === 0 ? (
         <div className="bg-[#111827] border border-white/10 rounded-3xl p-8 text-center text-white/40">

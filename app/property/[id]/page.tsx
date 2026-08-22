@@ -1,7 +1,7 @@
 
 
 import { createSupabaseAdminClient } from '@/lib/supabase'
-import { notFound } from 'next/navigation'
+import { getAppUrl, getGoogleMapsApiKey } from '@/lib/env'
 import DamageChecklist from '../../../components/DamageChecklist'
 import PreKnockCapture from '../../../components/PreKnockCapture'
 import StormReviewHistory from '../../../components/StormReviewHistory'
@@ -12,18 +12,11 @@ const ASSUMED_ROOF_AGE = 15; // until real roof_age data exists
 
 export const dynamic = 'force-dynamic'
 
-interface Property {
-  id: string
-  address: string
-  neighborhood?: string | null
-  field_score?: number | null
-  field_note?: string | null
-  observations?: string[] | null
-}
-
 export default async function PropertyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = createSupabaseAdminClient()
+  const googleMapsApiKey = getGoogleMapsApiKey()
+  const appUrl = getAppUrl()
 
   let property
   let error
@@ -51,6 +44,11 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
     );
   }
 
+  const { count: photosCollected } = await supabase
+    .from('photos')
+    .select('id', { count: 'exact', head: true })
+    .eq('property_id', property.id)
+
   return (
     <div className="min-h-screen bg-[#0a0e1a] text-white pb-24">
       {/* Header */}
@@ -74,14 +72,14 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
         {/* Real Google Street View + Satellite imagery (using the provided keys) */}
         <div className="rounded-3xl overflow-hidden mb-6 shadow-2xl shadow-black/60 border border-white/10">
           <img
-            src={`https://maps.googleapis.com/maps/api/streetview?size=640x360&location=${encodeURIComponent(property.address)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`}
+            src={`https://maps.googleapis.com/maps/api/streetview?size=640x360&location=${encodeURIComponent(property.address)}&key=${googleMapsApiKey}`}
             alt="Street View"
             className="w-full h-auto"
           />
         </div>
         <div className="rounded-3xl overflow-hidden mb-8 shadow-2xl shadow-black/60 border border-white/10">
           <img
-            src={`https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(property.address)}&zoom=19&size=640x360&maptype=satellite&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`}
+            src={`https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(property.address)}&zoom=19&size=640x360&maptype=satellite&key=${googleMapsApiKey}`}
             alt="Satellite View"
             className="w-full h-auto"
           />
@@ -131,10 +129,10 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
 
         <LogVisitForm 
           propertyId={property.id} 
-          photosCollected={3} 
+          photosCollected={photosCollected ?? 0}
         />
 
-        <HandOffReport propertyId={property.id} />
+        <HandOffReport propertyId={property.id} appUrl={appUrl} />
 
         <a href={`/property/${property.id}/present`} className="block mt-8 w-full bg-[#d4af37] hover:bg-[#e5c15c] text-[#0a0e1a] font-bold py-5 rounded-3xl text-center tracking-widest active:scale-[0.985]">
           → HOMEOWNER ANSWERED — START CAROUSEL

@@ -31,7 +31,7 @@ export default function Home() {
 
       // Navigate to property detail
       router.push(`/property/${data.property.id}`)
-    } catch (err) {
+    } catch {
       alert('Network error. Please try again.')
     } finally {
       setIsLoading(false)

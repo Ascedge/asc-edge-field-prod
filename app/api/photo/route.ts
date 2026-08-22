@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdminClient } from '@/lib/supabase'
+import { serverError, stringValue, uuidValue } from '@/lib/http'
+import { validateImage } from '@/lib/uploads'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
-    const propertyId = formData.get('property_id') as string
-    const phase = formData.get('phase') as string
-    const file = formData.get('image') as File | null
+    const propertyId = uuidValue(formData.get('property_id'), 'property_id')
+    const phase = stringValue(formData.get('phase'), 'phase', { required: true })!
+    const fileValue = formData.get('image')
 
-    if (!propertyId || !phase || !file) {
+    if (!(fileValue instanceof File)) {
       return NextResponse.json({ error: 'property_id, phase, and image file are required' }, { status: 400 })
     }
 
@@ -18,17 +20,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'phase must be pre_knock or full_house' }, { status: 400 })
     }
 
-    const timestamp = Date.now()
-    const fileExt = file.name.split('.').pop() || 'jpg'
-    const fileName = `${propertyId}/${phase}/${timestamp}.${fileExt}`
+    const { extension } = await validateImage(fileValue)
+    const fileName = `${propertyId}/${phase}/${crypto.randomUUID()}.${extension}`
 
     const supabase = createSupabaseAdminClient()
 
+    const { data: property, error: propertyError } = await supabase
+      .from('properties')
+      .select('id')
+      .eq('id', propertyId)
+      .single()
+    if (propertyError?.code === 'PGRST116' || !property) {
+      return NextResponse.json({ error: 'Property not found' }, { status: 404 })
+    }
+    if (propertyError) throw propertyError
+
     // Upload to Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('property-photos')
-      .upload(fileName, file, {
-        contentType: file.type || 'image/jpeg',
+      .upload(fileName, fileValue, {
+        contentType: fileValue.type,
         upsert: false,
       })
 
@@ -56,6 +67,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (insertError) {
+      await supabase.storage.from('property-photos').remove([fileName])
       return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
 
@@ -63,7 +75,10 @@ export async function POST(request: NextRequest) {
       photo_id: photo.id,
       url: storageUrl,
     })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 })
+  } catch (error) {
+    if (error instanceof Error && /required|UUID|JPEG|PNG|WebP|10 MB|empty|contents/.test(error.message)) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+    return serverError(error)
   }
 }

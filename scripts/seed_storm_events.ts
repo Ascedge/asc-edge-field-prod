@@ -6,8 +6,8 @@ import fs from 'fs';
 import zlib from 'zlib';
 import Papa from 'papaparse';
 
-const supabaseUrl = process.env.SUPABASE_URL || 'https://bifmlsnnjrvotucgbwdn.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpZm1sc25uanJ2b3R1Y2did2RuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0OTY1NjgwMCwiZXhwIjoyMDY1MjMyNDAwfQ.8v5z9pK8zL2mX7vN3qR5tY9uI0oP2qR4sT6uV8wX0Y';
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in env');
@@ -62,7 +62,6 @@ const severityRules = (eventType: string, magnitude: string | null, hail: string
 };
 
 async function downloadAndProcess(year: number): Promise<StormRecord[]> {
-  const url = `https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/StormEvents_details-ftp_v1.0_d${year}_c2026*.csv.gz`;
   // Use a known recent file name for reliability
   const knownUrl = `https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/StormEvents_details-ftp_v1.0_d${year}_c20260323.csv.gz`;
   console.log(`Downloading ${year} from ${knownUrl}...`);
@@ -89,14 +88,11 @@ async function downloadAndProcess(year: number): Promise<StormRecord[]> {
             const rows = result.data as any[];
             for (const row of rows) {
               const state = (row.STATE || '').toUpperCase().trim();
-              let county = (row.CZ_NAME || '').toUpperCase().trim();
-              if (county === 'HARRIS') county = 'Harris';
-              else if (county === 'GALVESTON') county = 'Galveston';
-              else if (county === 'BRAZORIA') county = 'Brazoria';
-              else if (county === 'FORT BEND') county = 'Fort Bend';
+              const rawCounty = (row.CZ_NAME || '').toUpperCase().trim();
               const eventType = (row.EVENT_TYPE || '').trim();
 
-              if (state !== 'TEXAS' || !COUNTIES.includes(county) || !RELEVANT_EVENTS.has(eventType)) continue;
+              if (state !== 'TEXAS' || !COUNTIES.includes(rawCounty) || !RELEVANT_EVENTS.has(eventType)) continue;
+              const county = rawCounty.toLowerCase().replace(/\b\w/g, (letter: string) => letter.toUpperCase());
 
               const beginDate = row.BEGIN_DATE_TIME || '';
               const eventDate = beginDate.split(' ')[0]; // YYYY-MM-DD

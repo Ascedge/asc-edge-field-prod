@@ -1,23 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase';
+import { numberValue, readJsonObject, serverError, stringArrayValue, uuidValue } from '@/lib/http';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const { propertyId, observations, field_score } = await request.json();
-
-    if (!propertyId) {
-      return NextResponse.json({ error: 'propertyId required' }, { status: 400 });
-    }
+    const body = await readJsonObject(request);
+    const propertyId = uuidValue(body.propertyId, 'propertyId');
+    const observations = stringArrayValue(body.observations, 'observations', 20);
+    const fieldScore = numberValue(body.field_score, 'field_score', 0, 10);
 
     const supabase = createSupabaseAdminClient();
 
     const { error } = await supabase
       .from('properties')
       .update({
-        observations: observations || [],
-        field_score: Math.min(10, Math.max(0, field_score || 0)),
+        observations,
+        field_score: fieldScore,
         updated_at: new Date().toISOString(),
       })
       .eq('id', propertyId);
@@ -27,7 +27,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+  } catch (error) {
+    if (error instanceof Error && /required|UUID|must be/.test(error.message)) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return serverError(error);
   }
 }

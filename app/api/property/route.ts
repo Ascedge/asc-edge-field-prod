@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdminClient } from '@/lib/supabase'
+import { readJsonObject, serverError, stringValue } from '@/lib/http'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const { address } = await request.json()
-
-    if (!address || typeof address !== 'string') {
-      return NextResponse.json({ error: 'Address is required' }, { status: 400 })
-    }
+    const body = await readJsonObject(request)
+    const address = stringValue(body.address, 'address', { required: true, maxLength: 240 })!
 
     // Normalize address (lowercase, trim, collapse whitespace)
     const normalizedAddress = address
@@ -20,7 +18,7 @@ export async function POST(request: NextRequest) {
     const supabase = createSupabaseAdminClient()
 
     // Exact match first
-    let { data: existing, error: findError } = await supabase
+    const { data: existing, error: findError } = await supabase
       .from('properties')
       .select('id, address, normalized_address, tenant_id, claim_status, neighborhood, field_score, field_note')
       .eq('normalized_address', normalizedAddress)
@@ -68,7 +66,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ property: inserted })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 })
+  } catch (error) {
+    if (error instanceof Error && /required|must be/.test(error.message)) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+    return serverError(error)
   }
 }

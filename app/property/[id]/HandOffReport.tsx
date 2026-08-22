@@ -5,11 +5,12 @@ import QRCode from 'react-qr-code'
 
 interface HandOffReportProps {
   propertyId: string
+  appUrl: string
 }
 
-export default function HandOffReport({ propertyId }: HandOffReportProps) {
+export default function HandOffReport({ propertyId, appUrl }: HandOffReportProps) {
   const [showQR, setShowQR] = useState(false);
-  const reportUrl = `https://asc-edge-field-prod.vercel.app/report/${propertyId}`;
+  const reportUrl = `${appUrl}/report/${propertyId}`;
 
   const logHandOff = async () => {
     try {
@@ -18,7 +19,7 @@ export default function HandOffReport({ propertyId }: HandOffReportProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           property_id: propertyId,
-          event_type: 'report_open',
+          event_type: 'baseline_view',
           variant: 'A'
         }),
       });

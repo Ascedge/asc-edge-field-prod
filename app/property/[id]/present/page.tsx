@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowRight, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ArrowRight, X } from 'lucide-react';
 
 interface Slide {
   id: number;
@@ -23,7 +23,7 @@ export default function HomeownerCarousel() {
   const [fieldScore, setFieldScore] = useState<number | null>(null);
   const [observations, setObservations] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasVisitedSlide, setHasVisitedSlide] = useState<Record<number, boolean>>({});
+  const visitedSlides = useRef(new Set<number>());
   const touchStartX = useRef(0);
   const isLogging = useRef(false);
 
@@ -84,7 +84,7 @@ export default function HomeownerCarousel() {
           setFieldScore(data.field_score || null);
           setObservations(data.observations || []);
         }
-      } catch (e) {
+      } catch {
         console.error('Failed to load property data for carousel');
       } finally {
         setIsLoading(false);
@@ -94,7 +94,7 @@ export default function HomeownerCarousel() {
     if (propertyId) loadProperty();
   }, [propertyId]);
 
-  const logEvent = async (event_type: string, slide_index: number, cta?: string) => {
+  const logEvent = useCallback(async (event_type: string, slide_index: number, cta?: string) => {
     if (isLogging.current) return;
     isLogging.current = true;
 
@@ -115,15 +115,15 @@ export default function HomeownerCarousel() {
     } finally {
       isLogging.current = false;
     }
-  };
+  }, [propertyId]);
 
   // Log slide view on change (only once per slide)
   useEffect(() => {
-    if (!isLoading && !hasVisitedSlide[currentSlide]) {
-      setHasVisitedSlide(prev => ({ ...prev, [currentSlide]: true }));
-      logEvent('slide_view', currentSlide + 1);
+    if (!isLoading && !visitedSlides.current.has(currentSlide)) {
+      visitedSlides.current.add(currentSlide);
+      void logEvent('slide_view', currentSlide + 1);
     }
-  }, [currentSlide, isLoading, hasVisitedSlide]);
+  }, [currentSlide, isLoading, logEvent]);
 
   const goToSlide = (index: number) => {
     if (index < 0 || index >= slides.length) return;

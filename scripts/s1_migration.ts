@@ -88,7 +88,7 @@ UPDATE visits SET tenant_id = 'gary' WHERE tenant_id IS NULL;
     const statements = migrationSQL.split(';').map(s => s.trim()).filter(s => s.length > 10)
 
     for (const stmt of statements) {
-      const { error: stmtError } = await supabase.from('pg_catalog').select().limit(0).throwOnError(false) // dummy to test, better to use raw if possible but since no psql, use multiple small calls or accept
+      await supabase.from('pg_catalog').select().limit(0).throwOnError(false) // dummy to test, better to use raw if possible but since no psql, use multiple small calls or accept
       console.log('Statement preview:', stmt.substring(0, 80) + '...')
       // Note: For true execution in this env, we would need direct SQL tool or assume admin works. In practice this logs intent for manual or next step.
     }

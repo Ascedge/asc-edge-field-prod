@@ -1,16 +1,10 @@
 import { createSupabaseAdminClient } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import StormReviewHistory from '../../../components/StormReviewHistory';
+import { getGoogleMapsApiKey } from '@/lib/env';
+import ReportOpenTracker from '@/components/ReportOpenTracker';
 
 export const dynamic = 'force-dynamic';
-
-interface Property {
-  id: string;
-  address: string;
-  neighborhood?: string | null;
-  field_score?: number | null;
-  observations?: string[] | null;
-}
 
 interface Photo {
   id: string;
@@ -21,6 +15,7 @@ interface Photo {
 export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = createSupabaseAdminClient();
+  const googleMapsApiKey = getGoogleMapsApiKey();
 
   const { data: property, error: propError } = await supabase
     .from('properties')
@@ -39,11 +34,12 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
     .order('created_at', { ascending: true });
   const photos: Photo[] = photosData || [];
 
-  const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=640x360&location=${encodeURIComponent(property.address)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`;
-  const satelliteUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(property.address)}&zoom=19&size=640x360&maptype=satellite&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`;
+  const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=640x360&location=${encodeURIComponent(property.address)}&key=${googleMapsApiKey}`;
+  const satelliteUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(property.address)}&zoom=19&size=640x360&maptype=satellite&key=${googleMapsApiKey}`;
 
   return (
     <div className="min-h-screen bg-[#0a0e1a] text-white pb-16">
+      <ReportOpenTracker propertyId={id} />
       {/* Header */}
       <header className="bg-black border-b border-[#d4af37]/60 py-6 px-6 flex items-center gap-4">
         <img src="/logo.png" alt="ASC EDGE" className="h-10 w-auto" />
@@ -145,23 +141,22 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
 
         <StormReviewHistory county="Harris" />
 
-        {/* Thermal IR Second Opinion */}
+        {/* Future capabilities */}
         <div className="mb-16">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <div className="uppercase text-[#d4af37] text-xs tracking-widest">AVAILABLE UPGRADE</div>
-              <div className="text-2xl font-semibold text-white mt-1">Thermal Infrared Second Opinion</div>
-            </div>
-            <div className="bg-[#d4af37]/10 text-[#d4af37] text-xs px-5 py-2 rounded-full font-medium">+$650 Service</div>
+          <div className="uppercase text-[#d4af37] text-xs tracking-widest mb-6">FUTURE CAPABILITIES</div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {['Autonomous Drone Flight Reports', 'AI Glasses Inspection Reports'].map((title) => (
+              <div key={title} className="rounded-3xl border border-white/10 bg-[#111827] p-6">
+                <div className="mb-3 inline-block rounded-full bg-[#d4af37]/10 px-3 py-1 text-[10px] font-bold tracking-widest text-[#d4af37]">
+                  COMING SOON
+                </div>
+                <h2 className="text-xl font-semibold text-white">{title}</h2>
+                <p className="mt-3 text-sm leading-relaxed text-white/60">
+                  This capability is under development and is not included in the current Roof Passport.
+                </p>
+              </div>
+            ))}
           </div>
-          <div className="bg-black border border-white/10 rounded-3xl p-2">
-            <img 
-              src="https://placehold.co/800x400/111827/d4af37?text=THERMAL+IR+SAMPLE+%28EXAMPLE%29" 
-              alt="Thermal IR Sample" 
-              className="rounded-2xl w-full"
-            />
-          </div>
-          <p className="text-center text-xs text-white/40 mt-4">Example thermal image — actual drone/FLIR capture available as paid add-on service</p>
         </div>
 
         {/* Footer */}

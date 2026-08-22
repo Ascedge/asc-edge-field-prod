@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 
 interface DamageChecklistProps {
   propertyId: string;
@@ -22,21 +22,14 @@ const options = Object.keys(weights);
 
 export default function DamageChecklist({ propertyId, initialScore, initialObservations }: DamageChecklistProps) {
   const [checked, setChecked] = useState<Set<string>>(new Set(initialObservations));
-  const [score, setScore] = useState(initialScore);
   const [saving, setSaving] = useState(false);
 
-  const calculateScore = (selected: Set<string>): number => {
-    let delta = 0;
-    selected.forEach(item => {
-      delta += weights[item] || 0;
-    });
-    // Base = initialScore (objective or original field_score). Add current bumps only. Recompute fresh each time so unchecking removes bump cleanly.
-    return Math.min(10, Math.max(0, initialScore + delta));
-  };
-
-  useEffect(() => {
-    setScore(calculateScore(checked));
-  }, [checked, initialScore]);
+  const initialDamage = initialObservations.reduce((total, item) => total + (weights[item] || 0), 0);
+  const baselineScore = Math.min(10, initialScore + initialDamage);
+  const score = useMemo(() => {
+    const damage = Array.from(checked).reduce((total, item) => total + (weights[item] || 0), 0);
+    return Math.min(10, Math.max(0, baselineScore - damage));
+  }, [baselineScore, checked]);
 
   const handleChange = async (option: string) => {
     const newChecked = new Set(checked);
@@ -47,7 +40,8 @@ export default function DamageChecklist({ propertyId, initialScore, initialObser
     }
     setChecked(newChecked);
 
-    const newScore = calculateScore(newChecked);
+    const damage = Array.from(newChecked).reduce((total, item) => total + (weights[item] || 0), 0);
+    const newScore = Math.min(10, Math.max(0, baselineScore - damage));
     setSaving(true);
 
     try {
@@ -93,7 +87,7 @@ export default function DamageChecklist({ propertyId, initialScore, initialObser
           {saving && <span className="text-xs ml-2 text-white/40">saving...</span>}
         </div>
       </div>
-      <div className="text-[10px] text-white/40 text-center mt-1">before → after • updates homeowner report</div>
+      <div className="text-[10px] text-white/40 text-center mt-1">Higher score means better visible condition • documented concerns lower the score</div>
     </div>
   );
 }

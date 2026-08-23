@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { readJsonObject, serverError, stringValue } from '@/lib/http'
-import { requireFieldContext } from '@/lib/auth'
+import { AuthorizationError, requireFieldContext } from '@/lib/auth'
 import { normalizeCanonicalAddress, resolveCanonicalAddress } from '@/lib/address-resolution'
 
 export const dynamic = 'force-dynamic'
@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
     if (readError || !created) throw readError || new Error('Created property could not be reopened')
     return NextResponse.json({ property: created })
   } catch (error) {
+    if (error instanceof AuthorizationError) return serverError(error)
     if (error instanceof Error && /required|must be/.test(error.message)) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }

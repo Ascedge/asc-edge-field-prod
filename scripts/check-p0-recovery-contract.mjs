@@ -28,6 +28,7 @@ assert.match(creation, /tenant_id: auth\.organization_id/)
 assert.match(creation, /body\.confirmed !== true/)
 assert.doesNotMatch(creation, /ilike|partialMatch/)
 assert.doesNotMatch(creation, /createSupabaseAdminClient/)
+assert.match(creation, /error instanceof AuthorizationError/)
 
 assert.match(publicResolver, /rpc\('resolve_public_passport'/)
 assert.doesNotMatch(authorization, /createSupabaseAdminClient/)

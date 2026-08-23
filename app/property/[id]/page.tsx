@@ -9,6 +9,7 @@ import StormReviewHistory from '../../../components/StormReviewHistory'
 import LogVisitForm from '../../../components/LogVisitForm'
 import HandOffReport from './HandOffReport'
 import FullDocumentationCapture from '../../../components/FullDocumentationCapture'
+import { getSignedPhotoUrl } from '@/lib/photo-urls'
 
 const ASSUMED_ROOF_AGE = 15; // until real roof_age data exists
 
@@ -57,6 +58,18 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
     .from('photos')
     .select('id', { count: 'exact', head: true })
     .eq('property_id', property.id)
+
+  const { data: preliminaryRows } = await supabase
+    .from('photos')
+    .select('id, storage_url, storage_path')
+    .eq('property_id', property.id)
+    .eq('phase', 'pre_knock')
+    .order('created_at', { ascending: true })
+  const preliminaryPhotos = await Promise.all((preliminaryRows || []).map(async (photo) => ({
+    id: photo.id,
+    url: await getSignedPhotoUrl(supabase, photo),
+    status: 'uploaded',
+  })))
 
   const { data: authorization } = await supabase
     .from('property_authorizations')
@@ -120,7 +133,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
 
         <DamageChecklist propertyId={property.id} initialScore={property.field_score || 8.5} initialObservations={property.observations || []} />
 
-        <PreKnockCapture propertyId={property.id} />
+        <PreKnockCapture propertyId={property.id} initialPhotos={preliminaryPhotos} />
 
         <FullDocumentationCapture propertyId={property.id} authorized={fullDocumentationAuthorized} />
 

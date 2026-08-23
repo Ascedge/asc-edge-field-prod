@@ -5,6 +5,7 @@ import { Camera, Image as ImageIcon } from 'lucide-react';
 
 interface PreKnockCaptureProps {
   propertyId: string;
+  initialPhotos?: PhotoItem[];
 }
 
 interface PhotoItem {
@@ -14,8 +15,9 @@ interface PhotoItem {
   file?: File;
 }
 
-export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
-  const [photos, setPhotos] = useState<PhotoItem[]>([]);
+export default function PreKnockCapture({ propertyId, initialPhotos = [] }: PreKnockCaptureProps) {
+  const [photos, setPhotos] = useState<PhotoItem[]>(initialPhotos);
+  const [message, setMessage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [category, setCategory] = useState('front_elevation');
   const [caption, setCaption] = useState('Ground-level exterior view; visual documentation only.');
@@ -25,6 +27,7 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
     if (!photo || !photo.file) return;
 
     setPhotos(prev => prev.map(p => p.id === tempId ? { ...p, status: 'uploading' } : p));
+    setMessage(null);
 
     const formData = new FormData();
     formData.append('property_id', propertyId);
@@ -49,6 +52,7 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
           )
         );
       } else {
+        setMessage(result.error || 'Upload failed. Confirm you are using the recovery preview and remain signed in.');
         setPhotos(prev => prev.map(p => p.id === tempId ? { ...p, status: 'error', file: photo.file } : p));
       }
     } catch {
@@ -61,6 +65,7 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
     if (!files || files.length === 0) return;
 
     setUploading(true);
+    setMessage(null);
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -92,11 +97,13 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
             )
           );
         } else {
+          setMessage(result.error || 'Upload failed. Confirm you are using the recovery preview and remain signed in.');
           setPhotos(prev => 
             prev.map(p => p.id === tempId ? { ...p, status: 'error' } : p)
           );
         }
       } catch {
+        setMessage('The upload could not reach the preview. Check your connection and try again.');
         setPhotos(prev => 
           prev.map(p => p.id === tempId ? { ...p, status: 'error' } : p)
         );
@@ -187,6 +194,8 @@ export default function PreKnockCapture({ propertyId }: PreKnockCaptureProps) {
           ))}
         </div>
       )}
+
+      {message && <p className="mt-4 rounded-2xl border border-red-300/25 bg-red-300/10 p-4 text-sm text-red-100">{message}</p>}
 
       {photos.filter(p => p.status === 'uploaded').length > 0 && (
         <div className="mt-8 flex flex-col gap-3">

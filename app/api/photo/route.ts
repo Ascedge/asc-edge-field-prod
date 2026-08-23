@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { serverError, stringValue, uuidValue } from '@/lib/http'
 import { validateImage } from '@/lib/uploads'
-import { requirePropertyAccess } from '@/lib/auth'
+import { AuthorizationError, requirePropertyAccess } from '@/lib/auth'
 import { removeFailedEvidenceUpload } from '@/lib/storage-admin'
 import { createHash } from 'node:crypto'
 
@@ -141,6 +141,7 @@ export async function POST(request: NextRequest) {
       report_status: nextStatus,
     })
   } catch (error) {
+    if (error instanceof AuthorizationError) return serverError(error)
     if (error instanceof Error && /required|UUID|JPEG|PNG|WebP|10 MB|empty|contents/.test(error.message)) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }

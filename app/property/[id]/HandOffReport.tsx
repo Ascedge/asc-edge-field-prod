@@ -48,6 +48,15 @@ export default function HandOffReport({ propertyId }: HandOffReportProps) {
 
   return (
     <div className="mb-8">
+      <section className="mb-4 rounded-3xl border border-[#d4af37]/30 bg-[#d4af37]/5 p-6">
+        <div className="text-xs font-bold tracking-widest text-[#d4af37]">HOMEOWNER AUTHORIZATION</div>
+        <ol className="mt-4 space-y-2 text-sm text-white/70">
+          <li>1. Add the limited preliminary exterior photographs above.</li>
+          <li>2. Display this secure QR code to the homeowner.</li>
+          <li>3. The homeowner reviews the preliminary Passport and approves or declines.</li>
+          <li>4. Approval automatically unlocks the full documentation controls on this page.</li>
+        </ol>
+      </section>
       <button
         onClick={handleShowQR}
         disabled={loading}
@@ -70,6 +79,9 @@ export default function HandOffReport({ propertyId }: HandOffReportProps) {
             <div className="text-xs text-black/50 font-mono break-all leading-tight mb-6">
               {reportUrl}
             </div>
+            <a href={reportUrl} target="_blank" rel="noreferrer" className="mb-5 block rounded-2xl bg-[#0a0e1a] px-4 py-3 text-sm font-bold text-[#d4af37]">
+              OPEN HOMEOWNER AUTHORIZATION PAGE
+            </a>
             <button
               onClick={() => setShowQR(false)}
               className="text-xs uppercase tracking-widest text-black/60 hover:text-black"

@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     if (error instanceof AuthorizationError) return serverError(error)
-    if (error instanceof Error && /required|UUID|JPEG|PNG|WebP|10 MB|empty|contents/.test(error.message)) {
+    if (error instanceof Error && /required|UUID|JPEG|PNG|WebP|4 MB|empty|contents/.test(error.message)) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
     return serverError(error)

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Camera } from 'lucide-react'
+import { prepareImageForUpload } from '@/lib/client-image-upload'
 
 const categories = [
   ['front_elevation', 'Front elevation'], ['rear_elevation', 'Rear elevation'],
@@ -31,7 +32,14 @@ export default function FullDocumentationCapture({ propertyId, authorized }: { p
     setUploading(true)
     setMessage(null)
     let uploaded = 0
-    for (const file of Array.from(files)) {
+    for (const originalFile of Array.from(files)) {
+      let file: File
+      try {
+        file = await prepareImageForUpload(originalFile)
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : 'The photo could not be prepared for upload.')
+        break
+      }
       const form = new FormData()
       form.append('property_id', propertyId)
       form.append('phase', 'full_house')
@@ -68,7 +76,7 @@ export default function FullDocumentationCapture({ propertyId, authorized }: { p
       <input value={caption} onChange={(event) => setCaption(event.target.value)} maxLength={500} placeholder="Visual observation caption" className="mt-3 w-full rounded-2xl border border-white/20 bg-[#111827] p-4 text-white" />
       <label className="mt-4 flex cursor-pointer items-center justify-center gap-3 rounded-2xl bg-[#d4af37] p-5 font-bold tracking-widest text-[#0a0e1a]">
         <Camera className="h-5 w-5" /> {uploading ? 'UPLOADING…' : 'ADD DOCUMENTATION PHOTOS'}
-        <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple disabled={uploading} onChange={upload} className="hidden" />
+        <input type="file" accept="image/*" capture="environment" multiple disabled={uploading} onChange={upload} className="hidden" />
       </label>
       {message && <p className="mt-4 text-sm text-white/70">{message}</p>}
       <button onClick={markComplete} className="mt-4 w-full rounded-2xl border border-emerald-400/40 p-4 text-sm font-bold tracking-widest text-emerald-200">MARK COMPLETE (20+ IMAGES)</button>

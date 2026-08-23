@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Camera, Image as ImageIcon } from 'lucide-react';
+import { prepareImageForUpload } from '@/lib/client-image-upload';
 
 interface PreKnockCaptureProps {
   propertyId: string;
@@ -29,12 +30,23 @@ export default function PreKnockCapture({ propertyId, initialPhotos = [] }: PreK
     setPhotos(prev => prev.map(p => p.id === tempId ? { ...p, status: 'uploading' } : p));
     setMessage(null);
 
+    let uploadFile: File;
+    try {
+      uploadFile = await prepareImageForUpload(photo.file);
+      setPhotos(prev => prev.map(p => p.id === tempId ? { ...p, file: uploadFile } : p));
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : 'The photo could not be prepared for upload.';
+      setMessage(detail);
+      setPhotos(prev => prev.map(p => p.id === tempId ? { ...p, status: 'error' } : p));
+      return;
+    }
+
     const formData = new FormData();
     formData.append('property_id', propertyId);
     formData.append('phase', 'pre_knock');
     formData.append('category', category);
     formData.append('caption', caption);
-    formData.append('image', photo.file);
+    formData.append('image', uploadFile);
 
     try {
       const res = await fetch('/api/photo', {
@@ -68,11 +80,22 @@ export default function PreKnockCapture({ propertyId, initialPhotos = [] }: PreK
     setMessage(null);
 
     for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+      const originalFile = files[i];
       const tempId = 'temp-' + Date.now() + '-' + i;
 
       // Add placeholder with file for retry
-      setPhotos(prev => [...prev, { id: tempId, url: '', status: 'uploading', file }]);
+      setPhotos(prev => [...prev, { id: tempId, url: '', status: 'uploading', file: originalFile }]);
+
+      let file: File;
+      try {
+        file = await prepareImageForUpload(originalFile);
+        setPhotos(prev => prev.map(p => p.id === tempId ? { ...p, file } : p));
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : 'The photo could not be prepared for upload.';
+        setMessage(detail);
+        setPhotos(prev => prev.map(p => p.id === tempId ? { ...p, status: 'error', file: originalFile } : p));
+        continue;
+      }
 
       const formData = new FormData();
       formData.append('property_id', propertyId);
@@ -168,6 +191,8 @@ export default function PreKnockCapture({ propertyId, initialPhotos = [] }: PreK
         className="hidden"
       />
 
+      {message && <p className="mt-4 rounded-2xl border border-red-300/25 bg-red-300/10 p-4 text-sm text-red-100">{message}</p>}
+
       {photos.length > 0 && (
         <div className="mt-6 grid grid-cols-2 gap-3">
           {photos.map((photo) => (
@@ -194,8 +219,6 @@ export default function PreKnockCapture({ propertyId, initialPhotos = [] }: PreK
           ))}
         </div>
       )}
-
-      {message && <p className="mt-4 rounded-2xl border border-red-300/25 bg-red-300/10 p-4 text-sm text-red-100">{message}</p>}
 
       {photos.filter(p => p.status === 'uploaded').length > 0 && (
         <div className="mt-8 flex flex-col gap-3">

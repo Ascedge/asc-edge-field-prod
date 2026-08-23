@@ -1,4 +1,5 @@
-export const MAX_IMAGE_BYTES = 10 * 1024 * 1024
+// Keep the multipart request below the serverless platform's request-body ceiling.
+export const MAX_IMAGE_BYTES = 4 * 1024 * 1024
 
 const allowedMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
@@ -8,7 +9,7 @@ const hasPrefix = (bytes: Uint8Array, prefix: number[]): boolean =>
 export async function validateImage(file: File): Promise<{ extension: string }> {
   if (!allowedMimeTypes.has(file.type)) throw new Error('Image must be JPEG, PNG, or WebP')
   if (file.size === 0) throw new Error('Image file is empty')
-  if (file.size > MAX_IMAGE_BYTES) throw new Error('Image must be 10 MB or smaller')
+  if (file.size > MAX_IMAGE_BYTES) throw new Error('Image must be 4 MB or smaller after preparation')
 
   const bytes = new Uint8Array(await file.slice(0, 16).arrayBuffer())
   const detected = hasPrefix(bytes, [0xff, 0xd8, 0xff])

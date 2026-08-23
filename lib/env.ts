@@ -26,6 +26,12 @@ export const getAppUrl = (): string => {
   return readUrl(name, readRequired(name))
 }
 
+export const buildAppUrl = (pathname: string): string => {
+  const url = new URL(getAppUrl())
+  url.pathname = pathname.startsWith('/') ? pathname : `/${pathname}`
+  return url.toString()
+}
+
 export const getGoogleMapsApiKey = (): string =>
   process.env.GOOGLE_MAPS_API_KEY?.trim() || readRequired('NEXT_PUBLIC_GOOGLE_MAPS_API_KEY')
 

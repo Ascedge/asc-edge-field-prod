@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAppUrl } from '@/lib/env'
+import { buildAppUrl } from '@/lib/env'
 import { requirePropertyAccess } from '@/lib/auth'
 import { serverError, uuidValue } from '@/lib/http'
 import { decryptShareToken, encryptShareToken, generateShareToken } from '@/lib/share-tokens'
@@ -18,7 +18,7 @@ export async function POST(_request: NextRequest, context: RouteContext<'/api/pr
       .order('created_at', { ascending: false }).limit(1).maybeSingle()
     if (existing?.token_ciphertext) {
       const rawToken = decryptShareToken(existing.token_ciphertext)
-      return NextResponse.json({ url: `${getAppUrl()}/p/${rawToken}`, expiresAt: null, durable: true }, { headers: { 'Cache-Control': 'no-store' } })
+      return NextResponse.json({ url: buildAppUrl(`/p/${rawToken}`), expiresAt: null, durable: true }, { headers: { 'Cache-Control': 'no-store' } })
     }
     if (existing) {
       const { error: revokeError } = await auth.supabase.from('share_tokens').update({ revoked_at: new Date().toISOString(), revocation_reason: 'Replaced legacy expiring preview link during P0 recovery' }).eq('id', existing.id)
@@ -36,7 +36,7 @@ export async function POST(_request: NextRequest, context: RouteContext<'/api/pr
     })
     if (error) throw error
 
-    const url = `${getAppUrl()}/p/${rawToken}`
+    const url = buildAppUrl(`/p/${rawToken}`)
     return NextResponse.json({ url, expiresAt: null, durable: true }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     return serverError(error)

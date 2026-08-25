@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
 const migration = readFileSync('supabase/migrations/202608210001_checkpoint3_auth_rls.sql', 'utf8')
+const storageRepair = readFileSync('supabase/migrations/202608250001_fix_property_evidence_upload_rls.sql', 'utf8')
 const protectedRoutes = [
   'app/api/photo/route.ts',
   'app/api/property/route.ts',
@@ -26,6 +27,9 @@ assert.doesNotMatch(migration, /create policy[^;]+photos[^;]+for delete/is)
 assert.doesNotMatch(migration, /create policy[^;]+photos[^;]+for update/is)
 assert.match(migration, /create table if not exists public\.storm_events/i)
 assert.match(migration, /rep_id = auth\.uid\(\)::text/)
+assert.match(storageRepair, /p\.id::text\s*=\s*\(storage\.foldername\(name\)\)\[2\]/)
+assert.match(storageRepair, /public\.can_access_property\(p\.id\)/)
+assert.doesNotMatch(storageRepair, /owner_id\s*=\s*auth\.uid/)
 
 for (const path of protectedRoutes) {
   const source = readFileSync(path, 'utf8')
